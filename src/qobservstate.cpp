@@ -17,11 +17,11 @@ void QObservState::process( const QIndivid& ind )
     if ( m_state.size() < ind.qsize() )
         m_state.resize( ind.qsize(), false );
 
-    BASETYPE randVal;
+    float randVal;
     BASETYPE mod;
     for ( size_t i = 0; i < ind.qsize(); ++i )
     {
-        randVal = ( ( BASETYPE )std::rand() / RAND_MAX );
+        randVal = ( ( float )std::rand() / RAND_MAX );
         mod = std::abs( ind.at(i).a );
         m_state[i] = randVal >= mod * mod;  // if randVal < |a|^2 then '0', otherwise '1'
     }

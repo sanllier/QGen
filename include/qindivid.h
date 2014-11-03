@@ -13,8 +13,8 @@ namespace QGen {
 
 struct QBit
 {
-    QComplex a;
-    QComplex b;
+    BASETYPE a;
+    BASETYPE b;
 };
 
 class QIndivid
@@ -30,9 +30,14 @@ public:
     inline const QBit& at( size_t pos ) const { const static QBit dummy = { 0, 0 }; return ( pos < 0 || pos >= m_dataLogicSize ) ? dummy : m_data[ pos ]; }
     inline QBit& at( size_t pos ) { static QBit dummy = { 0, 0 }; return ( pos < 0 || pos >= m_dataLogicSize ) ? dummy : m_data[ pos ]; }
 
-    void tick( const QRotOperator& op );
+    void tick( const QIndivid& globalBestInd, BASETYPE factor );
 
     inline size_t qsize() const { return m_dataLogicSize; }
+
+    inline const QBit* raw() const { return m_data; }
+    inline QBit* raw() { return m_data; }
+
+    QIndivid& operator=( const QIndivid& ind );
 
 private:
     QBit* m_data;
