@@ -32,6 +32,7 @@ struct QGenProcessSettings
     int indSize;
     long long catastropheThreshold;
     float targetFitness;
+    float accuracy;
     QFitnessClass* fClass;
 
     QGenProcessSettings()
@@ -41,6 +42,7 @@ struct QGenProcessSettings
         , indSize(0)
         , catastropheThreshold(0)
         , targetFitness(0.0f)
+        , accuracy(0.0f)
         , fClass(0) {}
 };
 

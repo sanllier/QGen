@@ -173,6 +173,17 @@ void QGenProcess::process()
 
         MASTER_PRINT( m_processBest.fitness << "\n" );
 
+        if ( m_settings.targetFitness > 0.0f )
+        {
+            if ( m_settings.accuracy > 0.0f )
+            {
+                if ( fabs( m_processBest.fitness - m_settings.targetFitness ) <= m_settings.accuracy )
+                    return;
+            }
+            else if ( m_processBest.fitness >= m_settings.targetFitness )
+                return;
+        }
+
         if ( m_settings.targetFitness > 0.0f && m_processBest.fitness >= m_settings.targetFitness )
             return;
 
