@@ -83,6 +83,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\mpicheck.cpp" />
+    <ClCompile Include="src\mtrand.cpp" />
     <ClCompile Include="src\qgen.cpp" />
     <ClCompile Include="src\qindivid.cpp" />
     <ClCompile Include="src\qobservstate.cpp" />
@@ -90,10 +92,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\defs.h" />
+    <ClInclude Include="include\mpicheck.h" />
+    <ClInclude Include="include\mtrand.h" />
     <ClInclude Include="include\qgen.h" />
     <ClInclude Include="include\qindivid.h" />
     <ClInclude Include="include\qobservstate.h" />
     <ClInclude Include="include\qrotoperator.h" />
+    <ClInclude Include="include\sharedmtrand.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

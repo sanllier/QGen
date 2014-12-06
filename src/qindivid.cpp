@@ -1,4 +1,7 @@
 #include "qindivid.h"
+#include "qobservstate.h"
+#include "sharedmtrand.h"
+#include "mpicheck.h"
 
 #include <string>
 #include <cstring>
@@ -10,20 +13,29 @@ namespace QGen {
 //------------------------------------------------------------
 
 QIndivid::QIndivid( size_t size/* = 0*/ )
+    : m_data(0)
+    , m_fitness( BASETYPE(0) )
+    , m_needRecalcFitness( true )
 {
     if ( size < 0 )
         throw std::string( "Invalid individ size. " ).append( __FUNCTION__ );
 
-    resize( size );
+    m_data = new QBit[ size ];
+    m_dataLogicSize = size;
+
     setInitial();
 }
 
-QIndivid::QIndivid( const QIndivid& ind )
+QIndivid::QIndivid( const QIndivid& ind )    
+    : m_data(0)
+    , m_fitness( BASETYPE(0) )
+    , m_needRecalcFitness( true )
 {
     m_data = new QBit[ ind.m_dataLogicSize ];
     m_dataLogicSize = ind.m_dataLogicSize;
-
     std::memcpy( m_data, ind.m_data, m_dataLogicSize * sizeof( QBit ) );
+
+    m_obsState = ind.m_obsState;
 }
 
 QIndivid::~QIndivid()
@@ -31,20 +43,26 @@ QIndivid::~QIndivid()
     delete[] m_data;
 }
 
+//------------------------------------------------------------
+
 void QIndivid::resize( size_t size )
 {
+    delete[] m_data;
     m_data = new QBit[ size ];
     m_dataLogicSize = size;
+
+    m_needRecalcFitness = true;
 }
 
 void QIndivid::setInitial()
 {
-    const BASETYPE defVal = (BASETYPE)( 1.0 / std::sqrt( 2 ) );
     for ( size_t i = 0; i < m_dataLogicSize; ++i )
     {
-        m_data[i].a = defVal;
-        m_data[i].b = defVal;
+        m_data[i].a = ( BASETYPE )( SharedMTRand::getClosedInstance()() );
+        m_data[i].b = std::sqrt( QComplex( BASETYPE(1) ) - m_data[i].a );
     }
+
+    m_needRecalcFitness = true;
 }
 
 QIndivid& QIndivid::operator=( const QIndivid& ind )
@@ -56,40 +74,71 @@ QIndivid& QIndivid::operator=( const QIndivid& ind )
         m_dataLogicSize = ind.m_dataLogicSize;
     }
     std::memcpy( m_data, ind.m_data, m_dataLogicSize * sizeof( QBit ) );
-
+    m_obsState = ind.m_obsState;
+    m_fitness = ind.m_fitness;
+    m_needRecalcFitness = ind.m_needRecalcFitness;
+    
     return *this;
 }
 
 //-----------------------------------------------------------
 
-inline BASETYPE func( const QBit& myQbit, const QBit& bestIndQbit )
+BASETYPE getThetaForQBit( const QIndivid& curInd, const QIndivid& bestInd, size_t qbitIdx )
 {
-    const BASETYPE dBest = bestIndQbit.a * bestIndQbit.b;
-    const BASETYPE dMy   = myQbit.a * myQbit.b;
-    const float sigmaBest = std::fabsf( std::atan2( bestIndQbit.b, bestIndQbit.a ) );
-    const float sigmaMy   = std::fabsf( std::atan2( myQbit.b, myQbit.a ) );
+    const static BASETYPE PI = BASETYPE( 3.14159265359 );
+    const static BASETYPE thetaField[2][2][2] = { { { BASETYPE( 0.01 ) * PI, BASETYPE( 0.01 ) * PI }, 
+                                                    { BASETYPE( 0.8 )  * PI, BASETYPE( 0.01 ) * PI } }, 
+                                                  { { BASETYPE( 0.8 )  * PI, BASETYPE( 0.01 ) * PI }, 
+                                                    { BASETYPE( 0.01 ) * PI, BASETYPE( 0.01 ) * PI } } };
 
-    if ( ( dBest > 0 && dMy > 0 ) || ( dBest <= 0 && dMy <= 0 ) )
-        return sigmaBest > sigmaMy ? +1.0f : -1.0f;
-    else
-        return sigmaBest > sigmaMy ? -1.0f : +1.0f;
+    const bool curIndBit  = curInd.getObsState().at( qbitIdx );
+    const bool bestIndBit = bestInd.getObsState().at( qbitIdx );
+    const bool betterThanBest = curInd.getFitnessUNSAFE() > bestInd.getFitnessUNSAFE();
 
-    return 0;
+    BASETYPE theta = thetaField[ curIndBit ? 1:0 ][ bestIndBit ? 1:0 ][ betterThanBest ? 1:0 ];
+    const QBit curIndQBit = curInd.at( qbitIdx );
+    BASETYPE prodRealPart = std::real( curIndQBit.a * curIndQBit.b );
+
+    if ( prodRealPart > 0 )
+        return curIndBit ? theta : -theta;        
+    else if ( prodRealPart < 0 )
+        return curIndBit ? -theta : theta;
+
+    return theta;
 }
 
-void QIndivid::tick( const QIndivid& globalBestInd, BASETYPE factor )
+void QIndivid::tick( const QIndivid& bestInd )
 {
-    QBit temp;
     QRotOperator op;
-
     for ( size_t i = 0; i < m_dataLogicSize; ++i )
     {
-        op.compute( factor * func( m_data[i], globalBestInd.m_data[i] ) );
-
-        temp.a = m_data[i].a * op[0][0] + m_data[i].b * op[0][1]; 
-        temp.b = m_data[i].a * op[1][0] + m_data[i].b * op[1][1]; 
-        m_data[i] = temp;
+        op.compute( getThetaForQBit( *this, bestInd, i ) );
+        m_data[i] = op * m_data[i];
     }
+}
+
+//------------------------------------------------------------
+
+void QIndivid::repair( QRepairClass* repClass )
+{
+    if ( m_needRecalcFitness && !repClass )
+        throw std::string( "QIndivid is trying to repair with (NULL) func" ).append( __FUNCTION__ ); 
+
+    (*repClass)( m_obsState );
+    m_needRecalcFitness = true;
+}
+
+//------------------------------------------------------------
+
+void QIndivid::bcast( int root, MPI_Comm comm )
+{
+    if ( root < 0 || comm ==  MPI_COMM_NULL )
+        throw std::string( "QIndivid is trying to bcast with invalid params" ).append( __FUNCTION__ ); 
+
+    CHECK( MPI_Bcast( m_data, m_dataLogicSize * 2, MPI_BASETYPE, root, comm ) );
+    CHECK( MPI_Bcast( m_obsState.data(), m_obsState.size(), MPI_C_BOOL, root, comm ) );
+    CHECK( MPI_Bcast( &m_fitness, 1, MPI_BASETYPE, root, comm ) );
+    m_needRecalcFitness = false;
 }
 
 //------------------------------------------------------------

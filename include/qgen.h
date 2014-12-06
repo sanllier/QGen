@@ -6,22 +6,13 @@
 
 #include "mpi.h"
 
-#include "defs.h"
-#include "qobservstate.h"
 #include "qindivid.h"
+#include "qobservstate.h"
+#include "defs.h"
 
 //------------------------------------------------------------
 
 namespace QGen {
-//------------------------------------------------------------
-
-class QFitnessClass
-{
-public:
-    virtual ~QFitnessClass() {}
-    virtual BASETYPE operator()( const QObservState& observState ) = 0;
-};
-
 //------------------------------------------------------------
 
 struct QGenProcessSettings
@@ -31,9 +22,12 @@ struct QGenProcessSettings
     int individsNum;
     int indSize;
     long long catastropheThreshold;
-    float targetFitness;
-    float accuracy;
+    long long immigrationThreshold;
+    long long immigrationSize;
+    BASETYPE targetFitness;
+    BASETYPE accuracy;
     QFitnessClass* fClass;
+    QRepairClass*  repClass;
 
     QGenProcessSettings()
         : cycThreshold(0)
@@ -41,9 +35,12 @@ struct QGenProcessSettings
         , individsNum(0)
         , indSize(0)
         , catastropheThreshold(0)
-        , targetFitness(0.0f)
-        , accuracy(0.0f)
-        , fClass(0) {}
+        , immigrationThreshold(0)
+        , immigrationSize(0)
+        , targetFitness( BASETYPE(0) )
+        , accuracy( BASETYPE(0) )
+        , fClass(0) 
+        , repClass(0) {}
 };
 
 class QGenProcess
@@ -52,15 +49,16 @@ public:
     QGenProcess( const QGenProcessSettings& settings, MPI_Comm comm = MPI_COMM_WORLD );
     ~QGenProcess();
 
-    inline bool active() const { return m_comm != MPI_COMM_NULL; }
     void process();
-
-    const QIndivid& getBestIndivid() const { return m_processBest.individ; }
+    const QIndivid& getBestIndivid() const { return m_totalBest.ind; }
 
     inline bool isMaster() const { return m_myID == ROOT_ID; }
 
 private:
-    bool findBest();
+    BASETYPE findIterationBestInd();
+    bool immigration();
+
+    inline bool active() const { return m_comm != MPI_COMM_NULL; }
 
 private:
     static int m_instancesCount;
@@ -68,29 +66,23 @@ private:
     int m_myID;
     int m_commSize;
 
-    std::vector< QIndivid > m_individs;
     QGenProcessSettings m_settings;
 
-    QObservState m_obsStatePreCached;
-
+    std::vector< QIndivid > m_individs;
+    
     struct BestSolution
     {
-        int rank;
-        int loc;
-        float fitness;
-        QIndivid individ;
+        int procRank;
+        int localIdx;
+        QIndivid ind;
 
         BestSolution()
-            : rank(-1)
-            , loc(-1)
-            , fitness( 0.0f )
+            : procRank(-1)
+            , localIdx(-1)
         {}
     };
-    BestSolution m_processBest;
-
-    BestSolution m_iterationBest;
-    bool m_iterationBestDirty;
-
+    BestSolution m_totalBest;
+    BestSolution m_iterBest;
 };
 
 //-----------------------------------------------------------

@@ -1,10 +1,12 @@
 #include "qgen.h"
 #include "qrotoperator.h"
+#include "qobservstate.h"
+#include "sharedmtrand.h"
+#include "mpicheck.h"
 
 #include <iostream>
 #include <string>
 
-#define CHECK( __ERR_CODE__ ) checkMPIRes( __ERR_CODE__, __FUNCTION__ )
 #define ACTIVE_ONLY if ( !active() ) return
 #define ACTIVE_ONLY_R( _x_ ) if ( !active() ) return _x_
 
@@ -16,19 +18,6 @@ namespace QGen {
 //------------------------------------------------------------
 
 int QGenProcess::m_instancesCount = 0;
-
-//-----------------------------------------------------------
-
-void checkMPIRes( int errCode, const char* location )
-{
-    if ( errCode != MPI_SUCCESS )
-    {
-        char errText[ MPI_MAX_ERROR_STRING ];
-        int len;
-        MPI_Error_string( errCode, errText, &len );
-        throw std::string( errText ).append( location );
-    }
-}
 
 //-----------------------------------------------------------
 
@@ -83,14 +72,15 @@ QGenProcess::QGenProcess( const QGenProcessSettings& settings, MPI_Comm comm/* =
 
     const int myIndsNum = m_settings.individsNum / m_commSize + ( m_myID < m_settings.individsNum % m_commSize ? 1 : 0 );
     m_individs.resize( myIndsNum < 0 ? 0 : myIndsNum );
-    for ( QIndivid& ind : m_individs )
+    for ( int i = 0; i < (int)m_individs.size(); ++i )
     {
-        ind.resize( settings.indSize );
-        ind.setInitial();
+        m_individs[i].resize( settings.indSize );
+        m_individs[i].setInitial();
+
     }
 
-    m_processBest.individ.resize( settings.indSize );
-    m_iterationBest.individ.resize( settings.indSize );
+    m_totalBest.ind.resize( settings.indSize );
+    m_iterBest.ind.resize( settings.indSize );
 }
 
 QGenProcess::~QGenProcess()
@@ -106,50 +96,76 @@ QGenProcess::~QGenProcess()
 
 //-----------------------------------------------------------
 
-struct FLoatInt
+struct NetIndividRef
 {
     float fitness;
-    int rank;
+    int procRank;
 };
 
-bool QGenProcess::findBest()
+BASETYPE QGenProcess::findIterationBestInd()
 {
-    ACTIVE_ONLY_R( false );
+    ACTIVE_ONLY_R( BASETYPE(0) );
 
-    BASETYPE max = BASETYPE(0);
-    BASETYPE cur = BASETYPE(0);
-    int localBestIndividIdx = 0;
+    BASETYPE maxFit = BASETYPE(0);
+    BASETYPE curFit = BASETYPE(0);
+    int localBestIndIdx = 0;
     for ( int i = 0; i < (int)m_individs.size(); ++i )
     {
-        m_obsStatePreCached.process( m_individs[i] );
-        cur = ( *m_settings.fClass )( m_obsStatePreCached );
-        if ( cur > max || i == 0 )
+        if ( m_settings.repClass )
+            m_individs[i].repair( m_settings.repClass );
+
+        m_individs[i].updateObsState();
+        //m_individs[i].getObsState().print();
+
+        curFit = m_individs[i].getFitness( m_settings.fClass );
+        if ( curFit > maxFit || i == 0 )
         {
-            max = cur;
-            localBestIndividIdx = i;
+            maxFit = curFit;
+            localBestIndIdx = i;
         }
     }
     
-    FLoatInt localBestIndividRef = { max, m_myID };
-    FLoatInt globalBestIndividRef;
-    CHECK( MPI_Allreduce( &localBestIndividRef, &globalBestIndividRef, 1, MPI_FLOAT_INT, MPI_MAXLOC, m_comm ) );
-    CHECK( MPI_Bcast( &localBestIndividIdx, 1, MPI_INT, globalBestIndividRef.rank, m_comm ) );
+    NetIndividRef localBestIndRef = { maxFit, m_myID };
+    NetIndividRef globalBestIndRef;
+    CHECK( MPI_Allreduce( &localBestIndRef, &globalBestIndRef, 1, MPI_FLOAT_INT, MPI_MAXLOC, m_comm ) );
 
-    const bool dontReplaceFlag = ( m_processBest.rank == globalBestIndividRef.rank && m_processBest.loc == localBestIndividIdx ) \
-        || m_processBest.fitness > globalBestIndividRef.fitness ;
+    int remoteLocalBestIndIdx = localBestIndIdx;
+    CHECK( MPI_Bcast( &remoteLocalBestIndIdx, 1, MPI_INT, globalBestIndRef.procRank, m_comm ) );
 
-    BestSolution& targetSln = dontReplaceFlag ? m_iterationBest : m_processBest;
-    QIndivid& targetInd = globalBestIndividRef.rank == m_myID ? m_individs[ localBestIndividIdx ] : targetSln.individ;
-    m_iterationBestDirty = !dontReplaceFlag;
+    if ( globalBestIndRef.procRank == m_myID )
+        m_iterBest.ind = m_individs[ localBestIndIdx ];
+    m_iterBest.ind.bcast( globalBestIndRef.procRank, m_comm );
 
-    CHECK( MPI_Bcast( targetInd.raw(), targetInd.qsize() * 2, MPI_FLOAT, globalBestIndividRef.rank, m_comm ) );
-    if ( globalBestIndividRef.rank == m_myID )
-        targetSln.individ = m_individs[ localBestIndividIdx ];
+    m_iterBest.procRank = globalBestIndRef.procRank;
+    m_iterBest.localIdx = remoteLocalBestIndIdx;
 
-    targetSln.rank    = globalBestIndividRef.rank;
-    targetSln.loc     = localBestIndividIdx;
-    targetSln.fitness = globalBestIndividRef.fitness;
-    return m_iterationBestDirty;
+    return globalBestIndRef.fitness;
+}
+
+//-----------------------------------------------------------
+
+bool QGenProcess::immigration()
+{
+    ACTIVE_ONLY_R( false );
+
+    //if ( m_settings.immigrationThreshold <= 0 || m_settings.immigrationSize < 0 )
+    //    return false;
+
+    //QIndivid& individ = m_iterationBest.individ;
+    //const long long indSize = individ.qsize();
+    //const long long immSize = m_settings.immigrationSize >= indSize ? indSize : m_settings.immigrationSize;
+
+    //for ( long long i = 0; i < immSize; ++i )
+    //{
+    //    const size_t pos = ( size_t )( SharedMTRand::get32UnsignedInstance()() ) % indSize;
+    //    QBit& temp = individ.at( pos );
+    //    temp.a = ( float )( SharedMTRand::getClosedInstance()() );
+    //    temp.b = std::sqrt( 1 - temp.a );
+    //}
+    
+    MASTER_PRINT( "IMMIGRATION\n" );
+
+    return true;
 }
 
 //-----------------------------------------------------------
@@ -158,43 +174,27 @@ void QGenProcess::process()
 {
     ACTIVE_ONLY;
 
-    double elapsedTime = 0;
-    long long catastropheGen = 1;
-    long long bestSolutionGen = 0;
-    float factor = 0.0f;
-
     for ( long long cycle = 1; cycle <= m_settings.cycThreshold; ++cycle )
     {
-        factor = 0.5f * ( ( m_settings.cycThreshold - cycle ) / catastropheGen ) / m_settings.cycThreshold;
-        if ( !findBest() )
-            ++bestSolutionGen;
-        else
-            bestSolutionGen = 0;
+        BASETYPE bestFitness = findIterationBestInd();
+        MASTER_PRINT( bestFitness << "\n" );
 
-        MASTER_PRINT( m_processBest.fitness << "\n" );
-
+        if ( bestFitness > m_totalBest.ind.getFitnessUNSAFE() || cycle == 1 )
+            m_totalBest = m_iterBest;
+        
         if ( m_settings.targetFitness > 0.0f )
         {
             if ( m_settings.accuracy > 0.0f )
             {
-                if ( fabs( m_processBest.fitness - m_settings.targetFitness ) <= m_settings.accuracy )
+                if ( fabs( m_totalBest.ind.getFitnessUNSAFE() - m_settings.targetFitness ) <= m_settings.accuracy )
                     return;
             }
-            else if ( m_processBest.fitness >= m_settings.targetFitness )
+            else if ( m_totalBest.ind.getFitnessUNSAFE() >= m_settings.targetFitness )
                 return;
         }
 
-        if ( m_settings.targetFitness > 0.0f && m_processBest.fitness >= m_settings.targetFitness )
-            return;
-
-        for ( QIndivid& ind : m_individs )
-            ind.tick( m_processBest.individ, factor );
-
-        if ( m_settings.catastropheThreshold > 0 && m_settings.catastropheThreshold <= bestSolutionGen )
-        {
-            m_processBest = m_iterationBest;
-            catastropheGen = cycle;
-        }
+        for ( int i = 0; i < (int)m_individs.size(); ++i )
+            m_individs[i].tick( m_totalBest.ind );
     }
 }
 
