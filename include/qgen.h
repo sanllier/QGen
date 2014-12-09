@@ -54,6 +54,8 @@ public:
 
     inline bool isMaster() const { return m_myID == ROOT_ID; }
 
+    inline static MPI_Datatype getQbitType() { return MPI_QBIT; }
+
 private:
     BASETYPE findIterationBestInd();
     bool immigration();
@@ -83,6 +85,8 @@ private:
     };
     BestSolution m_totalBest;
     BestSolution m_iterBest;
+
+    static MPI_Datatype MPI_QBIT;
 };
 
 //-----------------------------------------------------------

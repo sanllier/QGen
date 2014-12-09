@@ -18,11 +18,13 @@ namespace QGen {
 //------------------------------------------------------------
 
 int QGenProcess::m_instancesCount = 0;
+MPI_Datatype QGenProcess::MPI_QBIT = MPI_DATATYPE_NULL;
 
 //-----------------------------------------------------------
 
 QGenProcess::QGenProcess( const QGenProcessSettings& settings, MPI_Comm comm/* = MPI_COMM_WORLD*/ )
     : m_settings( settings ) 
+    , m_comm( MPI_COMM_NULL )
 {
     if ( !m_settings.fClass )
         throw std::string( "Invalid fitness class: NULL pointer." ).append( __FUNCTION__ );
@@ -30,20 +32,25 @@ QGenProcess::QGenProcess( const QGenProcessSettings& settings, MPI_Comm comm/* =
     int isMPIInitialized = 0;
     CHECK( MPI_Initialized( &isMPIInitialized ) );
     if ( !isMPIInitialized )
+    {
         CHECK( MPI_Init( 0, 0 ) );
+        CHECK( MPI_Type_vector( 1, 4, sizeof( BASETYPE ), MPI_BASETYPE, &MPI_QBIT ) );
+        CHECK( MPI_Type_commit( &MPI_QBIT ) );
+    }
 
-    CHECK( MPI_Comm_rank( comm, &m_myID ) );
+    int initialCommRank = 0;
     int initialCommSize = 0;
+    CHECK( MPI_Comm_rank( comm, &initialCommRank ) );
     CHECK( MPI_Comm_size( comm, &initialCommSize ) );
 
     if ( initialCommSize <= 0 )
         throw std::string( "Invalid communicator: comm size <= 0. " ).append( __FUNCTION__ );
          
-    if ( m_myID == ROOT_ID )
+    if ( initialCommRank == ROOT_ID )
         ++m_instancesCount;        
     CHECK( MPI_Bcast( &m_instancesCount, 1, MPI_INT, ROOT_ID, comm ) );
 
-    const int activesCount = m_settings.individsNum / initialCommSize <= 0 ? m_settings.individsNum : initialCommSize;
+    const int activesCount = std::min( m_settings.individsNum, initialCommSize );
     int *ranks = new int[ activesCount ];
     for ( int i = 0; i < activesCount; ++i )
         ranks[i] = i;
@@ -76,7 +83,6 @@ QGenProcess::QGenProcess( const QGenProcessSettings& settings, MPI_Comm comm/* =
     {
         m_individs[i].resize( settings.indSize );
         m_individs[i].setInitial();
-
     }
 
     m_totalBest.ind.resize( settings.indSize );
@@ -91,7 +97,10 @@ QGenProcess::~QGenProcess()
         CHECK( MPI_Comm_free( &m_comm ) );
 
     if ( m_instancesCount <= 0 )
-        CHECK( MPI_Finalize() );
+    {
+        CHECK( MPI_Type_free( &MPI_QBIT ) );
+        CHECK( MPI_Finalize() );        
+    }
 }
 
 //-----------------------------------------------------------

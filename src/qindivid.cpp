@@ -1,4 +1,5 @@
 #include "qindivid.h"
+#include "qgen.h"
 #include "qobservstate.h"
 #include "sharedmtrand.h"
 #include "mpicheck.h"
@@ -6,6 +7,7 @@
 #include <string>
 #include <cstring>
 #include <cmath>
+#include <iostream>
 
 //------------------------------------------------------------
 
@@ -24,6 +26,8 @@ QIndivid::QIndivid( size_t size/* = 0*/ )
     m_dataLogicSize = size;
 
     setInitial();
+
+    m_obsState.requestMemory( size );
 }
 
 QIndivid::QIndivid( const QIndivid& ind )    
@@ -50,6 +54,8 @@ void QIndivid::resize( size_t size )
     delete[] m_data;
     m_data = new QBit[ size ];
     m_dataLogicSize = size;
+
+    m_obsState.requestMemory( size );
 
     m_needRecalcFitness = true;
 }
@@ -135,7 +141,7 @@ void QIndivid::bcast( int root, MPI_Comm comm )
     if ( root < 0 || comm ==  MPI_COMM_NULL )
         throw std::string( "QIndivid is trying to bcast with invalid params" ).append( __FUNCTION__ ); 
 
-    CHECK( MPI_Bcast( m_data, m_dataLogicSize * 2, MPI_BASETYPE, root, comm ) );
+    //CHECK( MPI_Bcast( m_data, m_dataLogicSize, QGenProcess::getQbitType(), root, comm ) );
     CHECK( MPI_Bcast( m_obsState.data(), m_obsState.size(), MPI_C_BOOL, root, comm ) );
     CHECK( MPI_Bcast( &m_fitness, 1, MPI_BASETYPE, root, comm ) );
     m_needRecalcFitness = false;

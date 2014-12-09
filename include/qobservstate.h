@@ -46,6 +46,8 @@ public:
     }
     inline bool* data() { return m_state; }
 
+    void requestMemory( size_t memSize );
+
     QObservState& operator=( const QObservState& rState )
     {
         if ( m_stateSize != rState.m_stateSize )
