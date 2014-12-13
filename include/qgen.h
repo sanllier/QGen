@@ -21,6 +21,8 @@ struct QGenProcessSettings
     double timeThreshold;
     int individsNum;
     int indSize;
+    int topoRows;
+    int topoCols;
     long long catastropheThreshold;
     long long immigrationThreshold;
     long long immigrationSize;
@@ -34,6 +36,8 @@ struct QGenProcessSettings
         , timeThreshold( 0.0 )
         , individsNum(0)
         , indSize(0)
+        , topoRows(1)
+        , topoCols(1)
         , catastropheThreshold(0)
         , immigrationThreshold(0)
         , immigrationSize(0)
@@ -43,16 +47,43 @@ struct QGenProcessSettings
         , repClass(0) {}
 };
 
+//------------------------------------------------------------
+
+struct QGenProcessContext
+{
+    MPI_Comm generalComm;
+    MPI_Comm rowComm;
+
+    int generalRank;
+    int rowRank;
+
+    int generalSize;
+    int rowSize;
+
+    int coords[2];
+
+    QGenProcessContext()
+        : generalComm( MPI_COMM_NULL )
+        , rowComm( MPI_COMM_NULL )
+        , generalRank( -1 )
+        , rowRank( -1 )
+        , generalSize(0)
+        , rowSize(0)
+    {}
+};
+
+//------------------------------------------------------------
+
 class QGenProcess
 {
 public:
     QGenProcess( const QGenProcessSettings& settings, MPI_Comm comm = MPI_COMM_WORLD );
     ~QGenProcess();
 
-    void process();
-    const QIndivid& getBestIndivid() const { return m_totalBest.ind; }
+    double process();
+    const QIndivid& getBestIndivid() const { return *m_totalBest.ind; }
 
-    inline bool isMaster() const { return m_myID == ROOT_ID; }
+    inline bool isMaster() const { return m_ctx.generalRank == ROOT_ID; }
 
     inline static MPI_Datatype getQbitType() { return MPI_QBIT; }
 
@@ -60,27 +91,26 @@ private:
     BASETYPE findIterationBestInd();
     bool immigration();
 
-    inline bool active() const { return m_comm != MPI_COMM_NULL; }
+    inline bool active() const { return m_ctx.generalComm != MPI_COMM_NULL; }
 
 private:
     static int m_instancesCount;
-    MPI_Comm m_comm;
-    int m_myID;
-    int m_commSize;
 
+    QGenProcessContext m_ctx;
     QGenProcessSettings m_settings;
 
-    std::vector< QIndivid > m_individs;
+    std::vector< QIndivid* > m_individs;
     
     struct BestSolution
     {
         int procRank;
         int localIdx;
-        QIndivid ind;
+        QIndivid* ind;
 
         BestSolution()
             : procRank(-1)
             , localIdx(-1)
+            , ind(0)
         {}
     };
     BestSolution m_totalBest;

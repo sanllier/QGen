@@ -61,7 +61,7 @@ public:
         return *this;
     }
 
-    void print()
+    void print() const
     {
         for ( int i = 0; i < (int)m_stateSize; ++i )
             std::cout << (m_state[i] ? 1 : 0) << " ";
