@@ -139,8 +139,8 @@ QGenProcess::~QGenProcess()
     if ( active() )
     {
         CHECK( MPI_Comm_free( &m_ctx.generalComm ) );
-        //delete m_totalBest;
-        //delete m_iterBest;
+        delete m_totalBest;
+        delete m_iterBest;
         //FIXME: CHECK( MPI_Comm_free( &m_ctx.rowComm ) );  
     }
     
