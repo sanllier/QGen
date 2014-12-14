@@ -84,7 +84,7 @@ public:
     void bcast( int root );
 
     void printObsState( std::ostream &oStr ) const;
-    void writeObsStateInFile( const char* fileName ) const;
+    void writeObsStateInFile( const char* fileName );
 
 private:
     static MPI_Datatype MPI_QBIT;

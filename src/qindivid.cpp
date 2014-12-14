@@ -172,7 +172,7 @@ void QIndivid::bcast( int rootInd )
     }
 
     CHECK( MPI_Bcast( m_data, int( m_localLogicSize ), MPI_QBIT, rootInd, m_rowComm ) );
-    CHECK( MPI_Bcast( m_obsState.data(), int( m_obsState.size() ), MPI_C_BOOL, rootInd, m_rowComm ) );
+    CHECK( MPI_Bcast( m_obsState.data(), int( m_obsState.size() ), MPI_CHAR, rootInd, m_rowComm ) );
     CHECK( MPI_Bcast( &m_fitness, 1, MPI_BASETYPE, rootInd, m_rowComm ) );
     m_needRecalcFitness = false;
 }
@@ -200,18 +200,20 @@ void QIndivid::printObsState( std::ostream &oStr ) const
 
 //------------------------------------------------------------
 
-void QIndivid::writeObsStateInFile( const char* fileName ) const
+void QIndivid::writeObsStateInFile( const char* fileName )
 {
     if ( !fileName || !fileName[0] )
         throw std::string( "Invalid filename. " ).append( __FUNCTION__ );
 
     MPI_File file;
     MPI_Status status;
-    CHECK( MPI_File_open( m_indComm, fileName, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file ) );
-    CHECK( MPI_File_set_view( file, startQBit(), MPI_C_BOOL, MPI_C_BOOL, "native", MPI_INFO_NULL ) );
+    CHECK( MPI_File_open( m_indComm, const_cast< char* >( fileName ), MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file ) );
+    CHECK( MPI_File_set_view( file, startQBit(), MPI_CHAR, MPI_CHAR, "native", MPI_INFO_NULL ) );
 
-    CHECK( MPI_File_write_all( file, m_obsState.data(), int( m_obsState.size() ), MPI_C_BOOL, &status ) );
+    CHECK( MPI_File_write_all( file, m_obsState.data(), int( m_obsState.size() ), MPI_CHAR, &status ) );
     CHECK( MPI_File_close( &file ) );
+
+    //const_cast< XXX* > is crappy fix for BlueGene
 }
 
 //------------------------------------------------------------
