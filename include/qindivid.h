@@ -25,7 +25,7 @@ class QRepairClass
 {
 public:
     virtual ~QRepairClass() {}
-    virtual void operator()( MPI_Comm indComm, const QObservState& observState, long long startQBit, int idx ) = 0;
+    virtual void operator()( MPI_Comm indComm, QObservState& observState, long long startQBit, int idx ) = 0;
 };
 
 //------------------------------------------------------------
