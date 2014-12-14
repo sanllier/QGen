@@ -38,39 +38,39 @@ public:
         m_state[ pos ] = val;
     }
     
-    inline size_t size() const { return m_stateSize; }
+    inline long long size() const { return m_stateSize; }
     inline void clear()
     { 
         delete[] m_state;
         m_state = 0;
     }
     inline bool* data() { return m_state; }
+    inline const bool* data() const { return m_state; }
 
-    void requestMemory( size_t memSize );
+    void requestMemory( long long memSize );
 
     QObservState& operator=( const QObservState& rState )
     {
         if ( m_stateSize != rState.m_stateSize )
         {
             clear();
-            m_state = new bool[ rState.m_stateSize ];
+            m_state = new bool[ size_t( rState.m_stateSize ) ];
             m_stateSize = rState.m_stateSize;
         }
 
-        std::memcpy( m_state, rState.m_state, m_stateSize * sizeof( bool ) );
+        std::memcpy( m_state, rState.m_state, size_t( m_stateSize * sizeof( bool ) ) );
         return *this;
     }
 
-    void print() const
+    void print( std::ostream& oStr ) const
     {
         for ( int i = 0; i < (int)m_stateSize; ++i )
-            std::cout << (m_state[i] ? 1 : 0) << " ";
-        std::cout << "\r\n";
+            oStr << ( m_state[i] ? 1 : 0 );
     }
 
 private:
     bool* m_state;
-    size_t m_stateSize;
+    long long m_stateSize;
 };
 
 //------------------------------------------------------------

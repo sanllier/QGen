@@ -27,12 +27,12 @@ void QObservState::process( const QIndivid& ind )
     }
 }
 
-void QObservState::requestMemory( size_t memSize )
+void QObservState::requestMemory( long long memSize )
 {
     if ( m_stateSize != memSize )
     {
         clear();
-        m_state = new bool[ memSize ];
+        m_state = new bool[ size_t( memSize ) ];
         m_stateSize = memSize;
     }
 }

@@ -14,6 +14,10 @@
 namespace QGen {
 //------------------------------------------------------------
 
+MPI_Datatype QIndivid::MPI_QBIT = MPI_DATATYPE_NULL;
+
+//------------------------------------------------------------
+
 QIndivid::QIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] )
     : m_data(0)
     , m_fitness( BASETYPE(0) )
@@ -28,6 +32,12 @@ QIndivid::QIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int 
     
     int remainIndDims[2] = { 1, 0 };
     CHECK( MPI_Cart_sub( generalComm, remainIndDims, &m_indComm ) ); 
+
+    if ( MPI_QBIT == MPI_DATATYPE_NULL )
+    {
+        CHECK( MPI_Type_vector( 1, 4, sizeof( BASETYPE ), MPI_BASETYPE, &MPI_QBIT ) );
+        CHECK( MPI_Type_commit( &MPI_QBIT ) );
+    }
 
     resize( size );
     setInitial();
@@ -48,7 +58,7 @@ void QIndivid::resize( long long newSize )
     m_globalLogicSize = newSize;
     m_localLogicSize = newSize / commSize + ( m_coords[0] < newSize % commSize ? 1 : 0 );
     delete[] m_data;
-    m_data = new QBit[ m_localLogicSize ];
+    m_data = new QBit[ size_t( m_localLogicSize ) ];
 
     m_startQbit = ( newSize / commSize ) * m_coords[0] + std::min( newSize % commSize, ( long long )m_coords[0] ); 
 
@@ -72,9 +82,9 @@ QIndivid& QIndivid::operator=( const QIndivid& ind )
     if ( m_localLogicSize != ind.m_localLogicSize )
         throw std::string( "Different topologies. " ).append( __FUNCTION__ );
 
-    std::memcpy( m_data, ind.m_data, m_localLogicSize * sizeof( *m_data ) );
+    std::memcpy( m_data, ind.m_data, size_t( m_localLogicSize * sizeof( *m_data ) ) );
     m_obsState = ind.m_obsState;
-    m_fitness = ind.m_fitness;
+    m_fitness  = ind.m_fitness;
     m_needRecalcFitness = ind.m_needRecalcFitness;
 
     return *this;
@@ -161,10 +171,47 @@ void QIndivid::bcast( int rootInd )
             throw std::string( "QIndivid is trying to bcast with invalid params" ).append( __FUNCTION__ ); 
     }
 
-    CHECK( MPI_Bcast( m_data, m_localLogicSize, QGenProcess::getQbitType(), rootInd, m_rowComm ) );
-    CHECK( MPI_Bcast( m_obsState.data(), m_obsState.size(), MPI_C_BOOL, rootInd, m_rowComm ) );
+    CHECK( MPI_Bcast( m_data, int( m_localLogicSize ), MPI_QBIT, rootInd, m_rowComm ) );
+    CHECK( MPI_Bcast( m_obsState.data(), int( m_obsState.size() ), MPI_C_BOOL, rootInd, m_rowComm ) );
     CHECK( MPI_Bcast( &m_fitness, 1, MPI_BASETYPE, rootInd, m_rowComm ) );
     m_needRecalcFitness = false;
+}
+
+//------------------------------------------------------------
+
+void QIndivid::printObsState( std::ostream &oStr ) const
+{
+    int indCommSize = 0;
+    CHECK( MPI_Comm_size( m_indComm, &indCommSize ) );
+
+    for ( int i = 0; i < indCommSize; ++i )
+    {
+        if ( m_coords[0] == i )
+        {
+            oStr << m_coords[0] << ": "; 
+            m_obsState.print( oStr );
+            oStr << "\r\n";
+        }
+
+        oStr.flush();
+        CHECK( MPI_Barrier( m_indComm ) );        
+    }
+}
+
+//------------------------------------------------------------
+
+void QIndivid::writeObsStateInFile( const char* fileName ) const
+{
+    if ( !fileName || !fileName[0] )
+        throw std::string( "Invalid filename. " ).append( __FUNCTION__ );
+
+    MPI_File file;
+    MPI_Status status;
+    CHECK( MPI_File_open( m_indComm, fileName, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file ) );
+    CHECK( MPI_File_set_view( file, startQBit(), MPI_C_BOOL, MPI_C_BOOL, "native", MPI_INFO_NULL ) );
+
+    CHECK( MPI_File_write_all( file, m_obsState.data(), int( m_obsState.size() ), MPI_C_BOOL, &status ) );
+    CHECK( MPI_File_close( &file ) );
 }
 
 //------------------------------------------------------------

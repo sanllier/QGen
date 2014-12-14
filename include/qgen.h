@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "mpi.h"
-
+#include "mpicheck.h"
 #include "qindivid.h"
 #include "qobservstate.h"
 #include "defs.h"
@@ -15,36 +15,43 @@
 namespace QGen {
 //------------------------------------------------------------
 
+
+class QProcessScreen
+{
+public:
+    virtual void operator()( long long cycle, 
+                             const int coords[2], 
+                       const QIndivid& totalBest, 
+                       const QIndivid& iterBest ) = 0;
+};
+
+//------------------------------------------------------------
+
 struct QGenProcessSettings
 {
     long long cycThreshold;
-    double timeThreshold;
     int individsNum;
     int indSize;
     int topoRows;
     int topoCols;
-    long long catastropheThreshold;
-    long long immigrationThreshold;
-    long long immigrationSize;
     BASETYPE targetFitness;
     BASETYPE accuracy;
     QFitnessClass* fClass;
     QRepairClass*  repClass;
+    QProcessScreen* screenClass;
 
     QGenProcessSettings()
         : cycThreshold(0)
-        , timeThreshold( 0.0 )
         , individsNum(0)
         , indSize(0)
         , topoRows(1)
         , topoCols(1)
-        , catastropheThreshold(0)
-        , immigrationThreshold(0)
-        , immigrationSize(0)
         , targetFitness( BASETYPE(0) )
         , accuracy( BASETYPE(0) )
         , fClass(0) 
-        , repClass(0) {}
+        , repClass(0)
+        , screenClass(0)
+    {}
 };
 
 //------------------------------------------------------------
@@ -81,15 +88,13 @@ public:
     ~QGenProcess();
 
     double process();
-    const QIndivid& getBestIndivid() const { return *m_totalBest.ind; }
+    const QIndivid* getBestIndivid() const { return m_totalBest->ind; }
 
     inline bool isMaster() const { return m_ctx.generalRank == ROOT_ID; }
-
-    inline static MPI_Datatype getQbitType() { return MPI_QBIT; }
+    inline bool isMasterInd() const { return m_ctx.coords[1] == 0; }
 
 private:
     BASETYPE findIterationBestInd();
-    bool immigration();
 
     inline bool active() const { return m_ctx.generalComm != MPI_COMM_NULL; }
 
@@ -105,18 +110,32 @@ private:
     {
         int procRank;
         int localIdx;
+        MPI_Comm rowComm;
         QIndivid* ind;
 
         BestSolution()
             : procRank(-1)
             , localIdx(-1)
+            , rowComm( MPI_COMM_NULL )
             , ind(0)
         {}
-    };
-    BestSolution m_totalBest;
-    BestSolution m_iterBest;
+        ~BestSolution()
+        {
+            delete ind;
+            //FIXME: CHECK( MPI_Comm_free( &rowComm ) );
+        }
 
-    static MPI_Datatype MPI_QBIT;
+        BestSolution& operator=( const BestSolution& rSol )
+        {
+            procRank = rSol.procRank;
+            localIdx = rSol.localIdx;
+            *ind = *rSol.ind;
+
+            return *this;
+        }
+    };
+    BestSolution* m_totalBest;
+    BestSolution* m_iterBest;
 };
 
 //-----------------------------------------------------------

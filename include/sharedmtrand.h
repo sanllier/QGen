@@ -14,15 +14,15 @@ private:
     ~SharedMTRand() {}
 
 public:
-    inline static MTRand_closed& getClosedInstance()
+    inline static MTRand_closed& getClosedInstance( unsigned seed = 0 )
     {
-        static MTRand_closed randomizer( ( unsigned long )( std::time(0) ) );
+        static MTRand_closed randomizer( unsigned( time(0) ) ^ seed );
         return randomizer;
     }
 
-    inline static MTRand_int32& get32UnsignedInstance()
+    inline static MTRand_int32& get32UnsignedInstance( unsigned seed = 0 )
     {
-        static MTRand_int32 randomizer( ( unsigned long )( std::time(0) ) );
+        static MTRand_int32 randomizer( unsigned( time(0) ) ^ seed );
         return randomizer;
     }
 };

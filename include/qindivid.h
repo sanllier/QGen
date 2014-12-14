@@ -18,14 +18,14 @@ class QFitnessClass
 {
 public:
     virtual ~QFitnessClass() {}
-    virtual BASETYPE operator()( MPI_Comm indComm, const QObservState& observState, int startQBit, int idx ) = 0;
+    virtual BASETYPE operator()( MPI_Comm indComm, const QObservState& observState, long long startQBit, int idx ) = 0;
 };
 
 class QRepairClass
 {
 public:
     virtual ~QRepairClass() {}
-    virtual void operator()( MPI_Comm indComm, const QObservState& observState, int startQBit, int idx ) = 0;
+    virtual void operator()( MPI_Comm indComm, const QObservState& observState, long long startQBit, int idx ) = 0;
 };
 
 //------------------------------------------------------------
@@ -83,7 +83,12 @@ public:
 
     void bcast( int root );
 
+    void printObsState( std::ostream &oStr ) const;
+    void writeObsStateInFile( const char* fileName ) const;
+
 private:
+    static MPI_Datatype MPI_QBIT;
+
     QBit* m_data;
     long long m_localLogicSize;
     long long m_globalLogicSize;
