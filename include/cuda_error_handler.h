@@ -20,7 +20,7 @@
     cudaError_t cuerr = cudaGetLastError(); \
     if(cuerr != cudaSuccess) \
         throw std::string( "CUDA error in kernel launch: " ).append( cudaGetErrorString(cuerr) ).append( " at kernel " ).append( #KernelCallInstruction ); \
-
+    \
     cuerr = cudaDeviceSynchronize(); \
     if(cuerr != cudaSuccess) \
         throw std::string( "CUDA error in kernel execution: " ).append( cudaGetErrorString(cuerr) ).append( " at kernel " ).append( #KernelCallInstruction ); \

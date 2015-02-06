@@ -3,6 +3,7 @@
 #include "qindivid_gpu.h"
 #include "qgen.h"
 #include "qrotoperator.h"
+#include "defs_gpu.h"
 
 #include "cuda_runtime.h"
 #include "cuda_error_handler.h"
@@ -19,7 +20,7 @@ int QGPUIndivid::deviceId = -1;
 
 //------------------------------------------------------------
 
-void launchSetInitialKernel( QBit* data, long long size );
+void launchSetInitialKernel( GPUQbit* data, long long size );
 
 //------------------------------------------------------------
 
@@ -61,7 +62,7 @@ void QGPUIndivid::resize( long long newSize )
 
 void QGPUIndivid::setInitial()
 {
-    launchSetInitialKernel( m_deviceData, m_localLogicSize );
+    launchSetInitialKernel( ( GPUQbit* )m_deviceData, m_localLogicSize );
     m_needRecalcFitness = true;
 }
 
