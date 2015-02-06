@@ -29,9 +29,6 @@ QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowCo
         CHECK( MPI_Type_vector( 1, 4, sizeof( BASETYPE ), MPI_BASETYPE, &MPI_QBIT ) );
         CHECK( MPI_Type_commit( &MPI_QBIT ) );
     }
-
-    resize( size );
-    setInitial();
 }
 
 //------------------------------------------------------------
@@ -126,8 +123,7 @@ void QBaseIndivid::bcast( int root )
     
     m_observeState.bcast( root, m_context.rowComm );
     CHECK( MPI_Bcast( &m_fitness, 1, MPI_BASETYPE, root, m_context.rowComm ) );
-    
-    m_needRecalcFitness = false;
+    CHECK( MPI_Bcast( &m_needRecalcFitness, 1, MPI_CHAR, root, m_context.rowComm ) );    
 }
 
 //------------------------------------------------------------

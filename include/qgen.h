@@ -7,7 +7,6 @@
 #include "mpi.h"
 #include "mpicheck.h"
 #include "qindivid_base.h"
-#include "qobservestate.h"
 #include "defs.h"
 
 //------------------------------------------------------------

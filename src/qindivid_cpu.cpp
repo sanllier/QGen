@@ -14,7 +14,8 @@ QCPUIndivid::QCPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm
     : QBaseIndivid( size, generalComm,  rowComm, coords )
     , m_data(0)
 {
-
+    resize( size );
+    setInitial();
 }
 
 //------------------------------------------------------------
@@ -65,8 +66,8 @@ void QCPUIndivid::bcast( int root )
 {
     QBaseIndivid::bcast( root );
 
-    CHECK( MPI_Bcast( m_data, int( m_localLogicSize ), MPI_QBIT, root, m_context.rowComm ) );
-    m_needRecalcFitness = false;
+    if ( m_context.rowComm != MPI_COMM_NULL )
+        CHECK( MPI_Bcast( m_data, int( m_localLogicSize ), MPI_QBIT, root, m_context.rowComm ) );
 }
 
 //-----------------------------------------------------------
