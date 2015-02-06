@@ -22,6 +22,12 @@ struct QBit
 {
     QComplex a;
     QComplex b;
+
+    QBit() {}
+    QBit( QComplex a, QComplex b )
+        : a(a)
+        , b(b)
+    {}
 };
 
 //------------------------------------------------------------

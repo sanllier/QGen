@@ -97,8 +97,10 @@
     <ClCompile Include="src\mpicheck.cpp" />
     <ClCompile Include="src\mtrand.cpp" />
     <ClCompile Include="src\qgen.cpp" />
-    <ClCompile Include="src\qindivid.cpp" />
-    <ClCompile Include="src\qobservstate.cpp" />
+    <ClCompile Include="src\qindivid_cpu.cpp" />
+    <ClCompile Include="src\qindivid_base.cpp" />
+    <ClCompile Include="src\qindivid_gpu.cpp" />
+    <ClCompile Include="src\qobservestate.cpp" />
     <ClCompile Include="src\qrotoperator.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -106,8 +108,10 @@
     <ClInclude Include="include\mpicheck.h" />
     <ClInclude Include="include\mtrand.h" />
     <ClInclude Include="include\qgen.h" />
-    <ClInclude Include="include\qindivid.h" />
-    <ClInclude Include="include\qobservstate.h" />
+    <ClInclude Include="include\qindivid_cpu.h" />
+    <ClInclude Include="include\qindivid_base.h" />
+    <ClInclude Include="include\qindivid_gpu.h" />
+    <ClInclude Include="include\qobservestate.h" />
     <ClInclude Include="include\qrotoperator.h" />
     <ClInclude Include="include\sharedmtrand.h" />
   </ItemGroup>
