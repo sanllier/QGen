@@ -104,6 +104,7 @@
     <ClCompile Include="src\qrotoperator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\cuda_error_handler.h" />
     <ClInclude Include="include\defs.h" />
     <ClInclude Include="include\mpicheck.h" />
     <ClInclude Include="include\mtrand.h" />
@@ -114,6 +115,9 @@
     <ClInclude Include="include\qobservestate.h" />
     <ClInclude Include="include\qrotoperator.h" />
     <ClInclude Include="include\sharedmtrand.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\kernels.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

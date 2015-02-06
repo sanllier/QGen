@@ -32,4 +32,21 @@ struct QBit
 
 //------------------------------------------------------------
 
+#ifdef GPU
+
+struct GPUQbit
+{
+    BASETYPE aReal;
+    BASETYPE aImag;
+    BASETYPE bReal;
+    BASETYPE bImag;
+};
+
+//------------------------------------------------------------
+
+static const int CUDA_BLOCK_SIZE = 64;
+
+#endif
+
+//------------------------------------------------------------
 #endif

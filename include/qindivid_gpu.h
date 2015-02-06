@@ -30,6 +30,13 @@ public:
 protected:
     BASETYPE getThetaForQBit( const QBaseIndivid& bestInd, long long qbitIndex ) const override;
 
+private:
+    int selectDevice();
+
+private:
+    static int deviceId;
+
+    QBit* m_deviceData;
 };
 
 //------------------------------------------------------------
