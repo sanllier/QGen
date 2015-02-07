@@ -1,9 +1,11 @@
 #include "qgen.h"
 #include "qindivid_cpu.h"
-#include "qindivid_gpu.h"
 #include "qrotoperator.h"
 #include "sharedmtrand.h"
 #include "mpicheck.h"
+#ifdef GPU
+    #include "qindivid_gpu.h"
+#endif
 
 #include <iostream>
 #include <string>

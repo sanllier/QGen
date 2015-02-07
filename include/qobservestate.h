@@ -5,12 +5,6 @@
 
 #include "mpi.h"
 
-#ifdef GPU
-    #include "qindivid_gpu.h"
-    #include "cuda_runtime.h"
-    #include "cuda_error_handler.h"
-#endif
-
 //------------------------------------------------------------
 
 namespace QGen {

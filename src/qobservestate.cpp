@@ -1,8 +1,12 @@
 #include "qobservestate.h"
 #include "qindivid_cpu.h"
-#include "qindivid_gpu.h"
 #include "sharedmtrand.h"
 #include "mpicheck.h"
+#ifdef GPU
+    #include "qindivid_gpu.h"
+    #include "cuda_runtime.h"
+    #include "cuda_error_handler.h"
+#endif
 
 //------------------------------------------------------------
 
