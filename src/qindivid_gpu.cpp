@@ -23,6 +23,7 @@ int QGPUIndivid::deviceId = -1;
 //------------------------------------------------------------
 
 extern "C" void launchSetInitialKernel( GPUQbit* data, const BASETYPE* rands, long long size );
+extern "C" void launchObserveKernel( GPUQbit* data, const BASETYPE* rands, bool* buf, long long size );
 
 //------------------------------------------------------------
 
@@ -122,6 +123,14 @@ QBaseIndivid& QGPUIndivid::operator=( const QBaseIndivid& rInd )
     m_needRecalcFitness = castedIndivid.m_needRecalcFitness;
 
     return *this;
+}
+
+//-----------------------------------------------------------
+
+void QGPUIndivid::runObserveKernel( bool* gpuData ) const
+{
+    m_rand.generate();
+    launchObserveKernel( ( GPUQbit* )m_data, m_rand.getGPUData(), gpuData, m_localLogicSize );
 }
 
 //-----------------------------------------------------------

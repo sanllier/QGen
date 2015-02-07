@@ -27,3 +27,19 @@ extern "C" void launchSetInitialKernel( GPUQbit* data, const BASETYPE* rands, lo
 }
 
 //------------------------------------------------------------
+
+__global__ void observeKernel( GPUQbit* data, const BASETYPE* rands, bool* buf, long long size )
+{
+    long long index = blockIdx.x * blockDim.x + threadIdx.x;
+    if ( index >= size )
+        return;
+}
+
+extern "C" void launchObserveKernel( GPUQbit* data, const BASETYPE* rands, bool* buf, long long size )
+{
+    dim3 block = dim3 ( CUDA_BLOCK_SIZE );
+    dim3 grid = dim3 ( size / CUDA_BLOCK_SIZE + 1 );
+    SAFE_KERNEL_CALL( ( observeKernel<<< grid, block >>>( data, rands, buf, size ) ) );
+}
+
+//------------------------------------------------------------

@@ -12,7 +12,11 @@ namespace QGen {
 QObserveState::QObserveState()
     : m_state(0)
     , m_stateSize(0)
+#ifdef GPU
+    , m_gpuBuf(0)
+#endif
 {
+
 }
 
 //------------------------------------------------------------
@@ -28,6 +32,13 @@ void QObserveState::clear()
 { 
     delete[] m_state;
     m_state = 0;
+
+#ifdef GPU
+    if ( m_gpuBuf )
+        SAFE_CALL( cudaFree( m_gpuBuf ) );
+
+    m_gpuBuf = 0;
+#endif
 }
 
 //------------------------------------------------------------
@@ -52,14 +63,15 @@ void QObserveState::observe( const QBaseIndivid& ind )
                 const BASETYPE mod = std::abs( castedIndivid.localAt(i).a );
                 m_state[i] = randVal >= mod * mod;
             }
-
             break;
         }
 
     #ifdef GPU
         case INDIVID_TYPE_GPU:
         {
-            // GPU code here
+            const QGPUIndivid& castedIndivid = ( const QGPUIndivid& )ind;            
+            castedIndivid.runObserveKernel( m_gpuBuf );
+            SAFE_CALL( cudaMemcpy( m_state, m_gpuBuf, m_stateSize, cudaMemcpyDeviceToHost ) );
             break;
         }
     #endif
@@ -80,6 +92,9 @@ void QObserveState::resize( long long size )
     {
         clear();
         m_state = new bool[ size_t(size) ];
+#ifdef GPU
+        SAFE_CALL( cudaMalloc( &m_gpuBuf, size_t(size) ) );
+#endif
         m_stateSize = size;
     }
 }

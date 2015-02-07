@@ -28,6 +28,9 @@ public:
 
     QBaseIndivid& operator=( const QBaseIndivid& rInd ) override;
 
+public:
+    void runObserveKernel( bool* gpuData ) const;
+    
 protected:
     BASETYPE getThetaForQBit( const QBaseIndivid& bestInd, long long qbitIndex ) const override;
 

@@ -26,7 +26,7 @@ GPURand::~GPURand()
 
 //------------------------------------------------------------
 
-void GPURand::generate()
+void GPURand::generate() const
 {
    if ( m_size <= 0 )
        throw std::string( "GPURand trying to generate with unsetted size. " ).append( __FUNCTION__ );

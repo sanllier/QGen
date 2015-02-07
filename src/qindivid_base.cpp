@@ -54,9 +54,6 @@ void QBaseIndivid::resize( long long newSize )
     m_globalLogicSize = newSize;
     m_localLogicSize = newSize / commSize + ( procGridHeight < newSize % commSize ? 1 : 0 );
     m_firstQbit = ( newSize / commSize ) * procGridHeight + std::min( newSize % commSize, ( long long )procGridHeight ); 
-
-    // CRAP
-    //m_observeState.requestMemory( m_localLogicSize );
     m_needRecalcFitness = true;
 }
 

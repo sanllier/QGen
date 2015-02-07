@@ -15,7 +15,7 @@ public:
     GPURand( unsigned long long seed, long long size = 0 );
     ~GPURand();
 
-    void generate();
+    void generate() const;
     void resize( long long size );
     long long size() const { return m_size; }
 

@@ -2,7 +2,9 @@
 #define DEFS_GPU_H
 //------------------------------------------------------------
 
-#define BASETYPE float
+#ifndef BASETYPE
+    #define BASETYPE float
+#endif
 
 //------------------------------------------------------------
 
