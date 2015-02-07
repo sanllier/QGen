@@ -68,9 +68,6 @@ public:
     virtual QBaseIndivid& operator=( const QBaseIndivid& rInd ) = 0;
 
 protected:
-    virtual BASETYPE getThetaForQBit( const QBaseIndivid& bestInd, long long qbitIndex ) const = 0;
-
-protected:
     static MPI_Datatype MPI_QBIT;
 
     QBit* m_data;
@@ -83,6 +80,8 @@ protected:
 
     BASETYPE m_fitness;
     bool m_needRecalcFitness;
+
+    static BASETYPE m_thetaField[2][2][2];
 
     struct SBaseIndividContext
     {

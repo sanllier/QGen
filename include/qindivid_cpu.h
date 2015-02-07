@@ -27,8 +27,8 @@ public:
 
     QBaseIndivid& operator=( const QBaseIndivid& rInd ) override;
 
-protected:
-    BASETYPE getThetaForQBit( const QBaseIndivid& bestInd, long long qbitIndex ) const override;
+private:
+    BASETYPE getThetaForQBit( const QCPUIndivid& bestInd, long long qbitIndex ) const;
 
 public:
     const QBit& localAt( long long pos ) const;

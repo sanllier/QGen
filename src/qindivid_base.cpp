@@ -7,6 +7,7 @@ namespace QGen {
 //------------------------------------------------------------
 
 MPI_Datatype QBaseIndivid::MPI_QBIT = MPI_DATATYPE_NULL;
+BASETYPE QBaseIndivid::m_thetaField[2][2][2];
 
 //------------------------------------------------------------
 
@@ -29,6 +30,15 @@ QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowCo
     {
         CHECK( MPI_Type_vector( 1, 4, sizeof( BASETYPE ), MPI_BASETYPE, &MPI_QBIT ) );
         CHECK( MPI_Type_commit( &MPI_QBIT ) );
+
+        m_thetaField[0][0][0] = BASETYPE( 0.01 ) * PI;
+        m_thetaField[0][0][1] = BASETYPE( 0.01 ) * PI;
+        m_thetaField[0][1][0] = BASETYPE( 0.8 )  * PI;
+        m_thetaField[0][1][1] = BASETYPE( 0.01 ) * PI;
+        m_thetaField[1][0][0] = BASETYPE( 0.8 )  * PI;
+        m_thetaField[1][0][1] = BASETYPE( 0.01 ) * PI;
+        m_thetaField[1][1][0] = BASETYPE( 0.01 ) * PI;
+        m_thetaField[1][1][1] = BASETYPE( 0.01 ) * PI;
     }
 }
 
@@ -114,9 +124,6 @@ void QBaseIndivid::repair( QRepairClass* repClass )
 
 void QBaseIndivid::bcast( int root )
 {
-    if ( m_context.rowComm == MPI_COMM_NULL )
-        return;
-
     int rowCommSize = 0;
     CHECK( MPI_Comm_size( m_context.rowComm, &rowCommSize ) );
     if ( root < 0 || root >= rowCommSize )

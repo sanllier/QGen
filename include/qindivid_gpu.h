@@ -31,14 +31,19 @@ public:
 public:
     void runObserveKernel( bool* gpuData ) const;
     
-protected:
-    BASETYPE getThetaForQBit( const QBaseIndivid& bestInd, long long qbitIndex ) const override;
-
 private:
     int selectDevice();
+    void computeThetaBuffer( const QGPUIndivid& bestInd ) const;
 
 private:
     static int deviceId;
+
+    QBit* m_cpuBuf;
+
+    static BASETYPE* m_gpuThetaFiled;
+    BASETYPE* m_thetaBuf;
+    bool* m_isBetterGPUBuf;
+    bool* m_isBetterBuf;
 
     GPURand m_rand;
 };

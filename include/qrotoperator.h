@@ -14,13 +14,10 @@ class QRotOperator
 {
 public:
     QRotOperator( BASETYPE angle = BASETYPE(0) );
-    QRotOperator( const QRotOperator& op );
     virtual ~QRotOperator() {}
 
     void compute( BASETYPE angle );
-    inline const BASETYPE* operator[]( size_t row ) const { return m_matrix[ row ]; } 
 
-    QRotOperator& operator=( const QRotOperator& op );
     QBit operator*( const QBit& ampl ) const;
 
 private:

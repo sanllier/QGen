@@ -56,9 +56,10 @@ void QCPUIndivid::setInitial()
 void QCPUIndivid::evolve( const QBaseIndivid& bestInd )
 {
     QRotOperator op;
+    const QCPUIndivid& castedIndivid = ( const QCPUIndivid& )bestInd;
     for ( long long i = 0; i < m_localLogicSize; ++i )
     {
-        op.compute( getThetaForQBit( bestInd, i ) );
+        op.compute( getThetaForQBit( castedIndivid, i ) );
         m_data[i] = op * m_data[i];
     }
 }
@@ -67,10 +68,12 @@ void QCPUIndivid::evolve( const QBaseIndivid& bestInd )
 
 void QCPUIndivid::bcast( int root )
 {
+    if ( m_context.rowComm == MPI_COMM_NULL )
+        return;
+
     QBaseIndivid::bcast( root );
 
-    if ( m_context.rowComm != MPI_COMM_NULL )
-        CHECK( MPI_Bcast( m_data, int( m_localLogicSize ), MPI_QBIT, root, m_context.rowComm ) );
+    CHECK( MPI_Bcast( m_data, int( m_localLogicSize ), MPI_QBIT, root, m_context.rowComm ) );
 }
 
 //-----------------------------------------------------------
@@ -115,29 +118,20 @@ QBaseIndivid& QCPUIndivid::operator=( const QBaseIndivid& rInd )
 
 //-----------------------------------------------------------
 
-BASETYPE QCPUIndivid::getThetaForQBit( const QBaseIndivid& bestInd, long long qbitIndex ) const
+BASETYPE QCPUIndivid::getThetaForQBit( const QCPUIndivid& bestInd, long long qbitIndex ) const
 {
-    const static BASETYPE PI = BASETYPE( 3.14159265359 );
-    const static BASETYPE thetaField[2][2][2] = { { { BASETYPE( 0.01 ) * PI, BASETYPE( 0.01 ) * PI }, 
-                                                    { BASETYPE( 0.8 )  * PI, BASETYPE( 0.01 ) * PI } }, 
-                                                  { { BASETYPE( 0.8 )  * PI, BASETYPE( 0.01 ) * PI }, 
-                                                    { BASETYPE( 0.01 ) * PI, BASETYPE( 0.01 ) * PI } } };
-
-    const QCPUIndivid& bestIndividCasted = ( const QCPUIndivid& )bestInd;
     const bool curIndBit      = m_observeState.at( qbitIndex );
-    const bool bestIndBit     = bestIndividCasted.m_observeState.at( qbitIndex );
-    const bool betterThanBest = m_fitness > bestIndividCasted.m_fitness;
+    const bool bestIndBit     = bestInd.m_observeState.at( qbitIndex );
+    const bool betterThanBest = m_fitness > bestInd.m_fitness;
 
-    BASETYPE theta = thetaField[ curIndBit ? 1:0 ][ bestIndBit ? 1:0 ][ betterThanBest ? 1:0 ];
+    BASETYPE theta = m_thetaField[ curIndBit ? 1:0 ][ bestIndBit ? 1:0 ][ betterThanBest ? 1:0 ];
     const QBit curIndQBit = m_data[ qbitIndex ];
     BASETYPE prodRealPart = std::real( curIndQBit.a * curIndQBit.b );
 
-    if ( prodRealPart > 0 )
+    if ( prodRealPart >= 0 )
         return curIndBit ? theta : -theta;        
-    else if ( prodRealPart < 0 )
-        return curIndBit ? -theta : theta;
 
-    return theta;
+    return curIndBit ? -theta : theta;
 }
 
 //-----------------------------------------------------------

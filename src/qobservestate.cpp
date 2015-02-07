@@ -64,8 +64,11 @@ void QObserveState::observe( const QBaseIndivid& ind )
             #else
                 const BASETYPE randVal = BASETYPE( SharedMTRand::getClosedInstance()() );
             #endif
-                const BASETYPE mod = std::abs( castedIndivid.localAt(i).a );
-                m_state[i] = randVal >= mod * mod;
+                const QBit& qbit = castedIndivid.localAt(i);
+                const BASETYPE real = qbit.a.real();
+                const BASETYPE imag = qbit.a.imag();
+                const BASETYPE mod = std::abs( real * real + imag * imag );
+                m_state[i] = randVal >= mod;
             }
             break;
         }
