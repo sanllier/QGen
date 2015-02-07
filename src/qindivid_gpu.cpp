@@ -3,12 +3,15 @@
 #include "qindivid_gpu.h"
 #include "qgen.h"
 #include "qrotoperator.h"
+#include "defs_gpu.h"
 
 #include "cuda_runtime.h"
 #include "cuda_error_handler.h"
 
 #include "sharedmtrand.h"
 #include "mpicheck.h"
+
+#include <time.h>
 
 //------------------------------------------------------------
 
@@ -19,13 +22,13 @@ int QGPUIndivid::deviceId = -1;
 
 //------------------------------------------------------------
 
-void launchSetInitialKernel( QBit* data, long long size );
+extern "C" void launchSetInitialKernel( GPUQbit* data, const BASETYPE* rands, long long size );
 
 //------------------------------------------------------------
 
 QGPUIndivid::QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] )
     : QBaseIndivid( size, generalComm,  rowComm, coords )
-    , m_deviceData(0)
+    , m_rand( unsigned( time(0) ) ^ unsigned( coords[0] ))
 {
     if ( deviceId == -1 )
     {
@@ -41,8 +44,8 @@ QGPUIndivid::QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm
 
 QGPUIndivid::~QGPUIndivid()
 {
-    if ( m_deviceData )
-        CHECK( cudaFree( m_deviceData ) );
+    if ( m_data )
+        SAFE_CALL( cudaFree( m_data ) );
 }
 
 //------------------------------------------------------------
@@ -51,17 +54,20 @@ void QGPUIndivid::resize( long long newSize )
 {
     QBaseIndivid::resize( newSize );
 
-    if ( m_deviceData )
-        CHECK( cudaFree( m_deviceData ) );
+    if ( m_data )
+        SAFE_CALL( cudaFree( m_data ) );
 
-    CHECK( cudaMalloc( &m_deviceData, size_t( m_localLogicSize * sizeof( QBit ) ) ) );
+    SAFE_CALL( cudaMalloc( &m_data, size_t( m_localLogicSize * sizeof( QBit ) ) ) );
+
+    m_rand.resize( newSize );
 }
 
 //------------------------------------------------------------
 
 void QGPUIndivid::setInitial()
 {
-    launchSetInitialKernel( m_deviceData, m_localLogicSize );
+    m_rand.generate();
+    launchSetInitialKernel( ( GPUQbit* )m_data, m_rand.getGPUData(), m_localLogicSize );
     m_needRecalcFitness = true;
 }
 

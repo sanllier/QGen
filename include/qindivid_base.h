@@ -73,6 +73,8 @@ protected:
 protected:
     static MPI_Datatype MPI_QBIT;
 
+    QBit* m_data;
+
     long long m_localLogicSize;
     long long m_globalLogicSize;
     long long m_firstQbit;

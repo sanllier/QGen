@@ -167,15 +167,15 @@ QGenProcess::QGenProcess( const SQGenProcessSettings& settings, MPI_Comm comm/* 
             {
                 m_individs[i] =
                 #ifdef GPU
-                    m_settings.gpu ? new QGPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords ):
+                    m_settings.gpu ? (QBaseIndivid*)new QGPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords ):
                 #endif
-                    new QCPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
+                    (QBaseIndivid*)new QCPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
             }
             else
             {
                 #ifdef GPU
                     if ( m_settings.gpu )
-                        QGPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords )
+                        QGPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
                     else
                 #endif
                         QCPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
@@ -191,24 +191,24 @@ QGenProcess::QGenProcess( const SQGenProcessSettings& settings, MPI_Comm comm/* 
             CHECK( MPI_Cart_sub( cartComm, remainRowCommDims, &m_iterBest->rowComm) );
             m_iterBest->ind =
             #ifdef GPU
-                m_settings.gpu ? new QGPUIndivid( m_settings.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords ):
+                m_settings.gpu ? (QBaseIndivid*)new QGPUIndivid( m_settings.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords ):
             #endif
-                new QCPUIndivid( m_settings.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords );
+                (QBaseIndivid*)new QCPUIndivid( m_settings.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords );
         }
         else
         {
             m_iterBest->ind =
             #ifdef GPU
-                m_settings.gpu ? new QGPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
+                m_settings.gpu ? (QBaseIndivid*)new QGPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
             #endif
-                new QCPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
+                (QBaseIndivid*)new QCPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
         }
 
         m_totalBest->ind =
         #ifdef GPU
-            m_settings.gpu ? new QGPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
+            m_settings.gpu ? (QBaseIndivid*)new QGPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
         #endif
-            new QCPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
+            (QBaseIndivid*)new QCPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
         
         CHECK( MPI_Comm_free( &cartComm ) );
     }

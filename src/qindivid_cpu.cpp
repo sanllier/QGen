@@ -12,7 +12,6 @@ namespace QGen {
 
 QCPUIndivid::QCPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] )
     : QBaseIndivid( size, generalComm,  rowComm, coords )
-    , m_data(0)
 {
     resize( size );
     setInitial();

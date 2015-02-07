@@ -10,8 +10,9 @@ MPI_Datatype QBaseIndivid::MPI_QBIT = MPI_DATATYPE_NULL;
 
 //------------------------------------------------------------
 
-QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] ) 
-    : m_fitness( BASETYPE(0) )
+QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] )
+    : m_data(0)
+    , m_fitness( BASETYPE(0) )
     , m_needRecalcFitness( true )
 {
     if ( size < 0 )
@@ -42,6 +43,9 @@ QBaseIndivid::~QBaseIndivid()
 
 void QBaseIndivid::resize( long long newSize )
 {
+   if ( newSize <= 0 )
+       throw std::string( "QBaseIndivid trying to resize with incorrect parameter. " ).append( __FUNCTION__ );
+
     int commSize = 0;
     CHECK( MPI_Comm_size( m_context.indComm, &commSize ) );
 

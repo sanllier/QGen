@@ -2,6 +2,7 @@
 #define QINDIVID_GPU_H
 
 #include "qindivid_base.h"
+#include "gpu_rand.h"
 
 //------------------------------------------------------------
 
@@ -36,7 +37,7 @@ private:
 private:
     static int deviceId;
 
-    QBit* m_deviceData;
+    GPURand m_rand;
 };
 
 //------------------------------------------------------------

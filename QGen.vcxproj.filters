@@ -39,6 +39,9 @@
     <ClCompile Include="src\qindivid_gpu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\gpu_rand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\defs.h">
@@ -74,10 +77,16 @@
     <ClInclude Include="include\cuda_error_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\defs_gpu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gpu_rand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\kernels.cu">
+    <CudaCompile Include="src\kernels.cu">
       <Filter>Source Files</Filter>
-    </None>
+    </CudaCompile>
   </ItemGroup>
 </Project>

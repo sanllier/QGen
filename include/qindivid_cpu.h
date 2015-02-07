@@ -32,10 +32,6 @@ protected:
 
 public:
     const QBit& localAt( long long pos ) const;
-
-private:
-    QBit* m_data;
-
 };
 
 //------------------------------------------------------------
