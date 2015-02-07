@@ -2,12 +2,13 @@
 #include "qindivid_cpu.h"
 #include "sharedmtrand.h"
 #include "mpicheck.h"
+#include "pugixml.hpp"
 #ifdef GPU
     #include "qindivid_gpu.h"
 #endif
 
-#include <iostream>
 #include <string>
+#include <string.h>
 
 //------------------------------------------------------------
 
@@ -23,7 +24,7 @@ namespace QGen {
 
 int QGenProcess::m_instancesCount = 0;
 
-//-----------------------------------------------------------
+//------------------------------------------------------------
 
 struct QGenProcess::SQGenProcessContext
 {
@@ -82,13 +83,99 @@ struct QGenProcess::SBestSolution
 
 //-----------------------------------------------------------
 
-QGenProcess::QGenProcess( const SQGenProcessSettings& settings, MPI_Comm comm/* = MPI_COMM_WORLD*/ )
-    : m_settings( settings ) 
+SQGenParams::SQGenParams( const char* file/* = 0*/, QFitnessClass* fC/* = 0*/, QRepairClass* rC/* = 0*/, QProcessScreen* sC/* = 0*/)
+        : cycThreshold(0)
+        , individsNum(0)
+        , indSize(0)
+        , topoRows(1)
+        , topoCols(1)
+        , targetFitness( BASETYPE(0) )
+        , accuracy( BASETYPE(0) )
+        , fClass(0) 
+        , repClass(0)
+        , screenClass(0)
+    #ifdef GPU
+        , gpu(false)
+    #endif
+{
+    if ( file )
+        init( file, fC, rC, sC );
+}
+
+//-----------------------------------------------------------
+
+void SQGenParams::init( const char* file, QFitnessClass* fC, QRepairClass* rC/* = 0*/, QProcessScreen* sC/* = 0*/)
+{
+    if ( !file || !file[0] )
+        throw std::string( "Some problems with params file. " ).append( __FUNCTION__ );
+
+    pugi::xml_document doc;
+    doc.load_file( file );
+    
+    pugi::xml_node qgenNode = doc.child( "qgen" );    
+    if ( !qgenNode )
+        throw std::string( "Some problems with params file. " ).append( __FUNCTION__ );
+
+    for ( pugi::xml_node node = qgenNode.child( "parameter" ); node; node = node.next_sibling() )
+    {
+        const char* name = node.attribute( "name" ).as_string();
+        if ( !name )
+            continue;
+
+        if ( 0 == strcmp( "cycle-threshold", name ) )
+        {
+            cycThreshold = (long long)node.attribute( "value" ).as_uint(0);
+        }
+        else if ( 0 == strcmp( "individs-num", name ) )
+        {
+            individsNum = (int)node.attribute( "value" ).as_int(0);
+        }
+        else if ( 0 == strcmp( "individ-size", name ) )
+        {
+            indSize = (int)node.attribute( "value" ).as_int(0);
+        }
+        else if ( 0 == strcmp( "topology-rows", name ) )
+        {
+            topoRows = (int)node.attribute( "value" ).as_int(0);
+        }
+        else if ( 0 == strcmp( "topology-cols", name ) )
+        {
+            topoCols = (int)node.attribute( "value" ).as_int(0);
+        }
+        else if ( 0 == strcmp( "target-fitness", name ) )
+        {
+            targetFitness = (BASETYPE)node.attribute( "value" ).as_double(0.0);
+        }
+        else if ( 0 == strcmp( "target-accuracy", name ) )
+        {
+            accuracy = (BASETYPE)node.attribute( "value" ).as_double(0.0);
+        }
+        else if ( 0 == strcmp( "out-file", name ) )
+        {
+            outFile = node.attribute( "value" ).as_string("");
+        }
+    #ifdef GPU
+        else if ( 0 == strcmp( "use-gpu", name ) )
+        {
+            gpu = node.attribute( "value" ).as_bool( false );
+        }
+    #endif
+    }
+
+    fClass      = fC;
+    repClass    = rC;
+    screenClass = sC;
+}
+
+//-----------------------------------------------------------
+
+QGenProcess::QGenProcess( const SQGenParams& params, MPI_Comm comm/* = MPI_COMM_WORLD*/ )
+    : m_params( params ) 
     , m_ctx(0)
     , m_totalBest(0)
     , m_iterBest(0)
 {
-    if ( !m_settings.fClass )
+    if ( !m_params.fClass )
         throw std::string( "Invalid fitness class: NULL pointer." ).append( __FUNCTION__ );
 
     int isMPIInitialized = 0;
@@ -103,7 +190,7 @@ QGenProcess::QGenProcess( const SQGenProcessSettings& settings, MPI_Comm comm/* 
 
     SharedMTRand::getClosedInstance( initialCommRank + 1 ); //setting seed
 
-    const int requestedCommSize = m_settings.topoCols * m_settings.topoRows;
+    const int requestedCommSize = m_params.topoCols * m_params.topoRows;
 
     if ( initialCommSize <= 0 )
         throw std::string( "Invalid communicator: comm size <= 0. " ).append( __FUNCTION__ );
@@ -136,17 +223,17 @@ QGenProcess::QGenProcess( const SQGenProcessSettings& settings, MPI_Comm comm/* 
         CHECK( MPI_Comm_rank( m_ctx->generalComm, &(m_ctx->generalRank) ) );
         CHECK( MPI_Comm_size( m_ctx->generalComm, &(m_ctx->generalSize) ) );
 
-        if ( m_settings.topoCols <= 0 || m_settings.topoRows <= 0 )
+        if ( m_params.topoCols <= 0 || m_params.topoRows <= 0 )
             throw std::string( "Invalid topology settings. " ).append( __FUNCTION__ );
 
-        int dims[2] = { m_settings.topoRows, m_settings.topoCols };
+        int dims[2] = { m_params.topoRows, m_params.topoCols };
         int periods[2] = { 0, 0 };
         MPI_Comm cartComm = MPI_COMM_NULL;
         CHECK( MPI_Cart_create( m_ctx->generalComm, 2, dims, periods, false, &cartComm ) );
         if ( cartComm == MPI_COMM_NULL )
             throw std::string( "Some problems with cart communicator. " ).append( __FUNCTION__ );
 
-        if ( m_settings.topoCols > 1 )
+        if ( m_params.topoCols > 1 )
         {
             int remainRowCommDims[2] = { 0, 1 };
             CHECK( MPI_Cart_sub( cartComm, remainRowCommDims, &(m_ctx->rowComm) ) );
@@ -156,10 +243,10 @@ QGenProcess::QGenProcess( const SQGenProcessSettings& settings, MPI_Comm comm/* 
 
         CHECK( MPI_Cart_coords( cartComm, m_ctx->generalRank, 2, m_ctx->coords ) );
 
-        const int localIndsNum = m_settings.individsNum / m_settings.topoCols +
-            ( m_ctx->coords[1] < m_settings.individsNum % m_settings.topoCols ? 1 : 0 );
-        const int maxIters = m_settings.individsNum / m_settings.topoCols +
-            ( m_settings.individsNum % m_settings.topoCols ? 1 : 0 );
+        const int localIndsNum = m_params.individsNum / m_params.topoCols +
+            ( m_ctx->coords[1] < m_params.individsNum % m_params.topoCols ? 1 : 0 );
+        const int maxIters = m_params.individsNum / m_params.topoCols +
+            ( m_params.individsNum % m_params.topoCols ? 1 : 0 );
 
         m_individs.resize( localIndsNum );
         for ( int i = 0; i < maxIters; ++i )
@@ -168,48 +255,48 @@ QGenProcess::QGenProcess( const SQGenProcessSettings& settings, MPI_Comm comm/* 
             {
                 m_individs[i] =
                 #ifdef GPU
-                    m_settings.gpu ? (QBaseIndivid*)new QGPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords ):
+                    m_params.gpu ? (QBaseIndivid*)new QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords ):
                 #endif
-                    (QBaseIndivid*)new QCPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
+                    (QBaseIndivid*)new QCPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
             }
             else
             {
                 #ifdef GPU
-                    if ( m_settings.gpu )
-                        QGPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
+                    if ( m_params.gpu )
+                        QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
                     else
                 #endif
-                        QCPUIndivid( m_settings.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
+                        QCPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
             }
         }
 
         m_totalBest = new SBestSolution;
         m_iterBest  = new SBestSolution;
 
-        if ( m_settings.topoCols > 1 )
+        if ( m_params.topoCols > 1 )
         {
             int remainRowCommDims[2] = { 0, 1 };
             CHECK( MPI_Cart_sub( cartComm, remainRowCommDims, &m_iterBest->rowComm) );
             m_iterBest->ind =
             #ifdef GPU
-                m_settings.gpu ? (QBaseIndivid*)new QGPUIndivid( m_settings.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords ):
+                m_params.gpu ? (QBaseIndivid*)new QGPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords ):
             #endif
-                (QBaseIndivid*)new QCPUIndivid( m_settings.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords );
+                (QBaseIndivid*)new QCPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords );
         }
         else
         {
             m_iterBest->ind =
             #ifdef GPU
-                m_settings.gpu ? (QBaseIndivid*)new QGPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
+                m_params.gpu ? (QBaseIndivid*)new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
             #endif
-                (QBaseIndivid*)new QCPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
+                (QBaseIndivid*)new QCPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
         }
 
         m_totalBest->ind =
         #ifdef GPU
-            m_settings.gpu ? (QBaseIndivid*)new QGPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
+            m_params.gpu ? (QBaseIndivid*)new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
         #endif
-            (QBaseIndivid*)new QCPUIndivid( m_settings.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
+            (QBaseIndivid*)new QCPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
         
         CHECK( MPI_Comm_free( &cartComm ) );
     }
@@ -279,24 +366,24 @@ double QGenProcess::process()
 
     double startTime = MPI_Wtime();
 
-    for ( long long cycle = 1; cycle <= m_settings.cycThreshold; ++cycle )
+    for ( long long cycle = 1; cycle <= m_params.cycThreshold; ++cycle )
     {
         BASETYPE bestFitness = findIterationBestInd();
 
         if ( bestFitness > m_totalBest->ind->getFitness() || cycle == 1 )
             *m_totalBest = *m_iterBest;
 
-        if ( m_settings.screenClass )
-            ( *m_settings.screenClass )( cycle, m_ctx->coords, *( m_totalBest->ind ), *( m_iterBest->ind ) );
+        if ( m_params.screenClass )
+            ( *m_params.screenClass )( cycle, m_ctx->coords, *( m_totalBest->ind ), *( m_iterBest->ind ) );
 
-        if ( m_settings.targetFitness > 0.0f )
+        if ( m_params.targetFitness > 0.0f )
         {
-            if ( m_settings.accuracy > 0.0f )
+            if ( m_params.accuracy > 0.0f )
             {
-                if ( fabs( m_totalBest->ind->getFitness() - m_settings.targetFitness ) <= m_settings.accuracy )
+                if ( fabs( m_totalBest->ind->getFitness() - m_params.targetFitness ) <= m_params.accuracy )
                     return MPI_Wtime() - startTime;
             }
-            else if ( m_totalBest->ind->getFitness() >= m_settings.targetFitness )
+            else if ( m_totalBest->ind->getFitness() >= m_params.targetFitness )
                 return MPI_Wtime() - startTime;
         }
 
@@ -326,10 +413,10 @@ BASETYPE QGenProcess::findIterationBestInd()
     {
         m_individs[i]->calculateObservState();
 
-        if ( m_settings.repClass )
-            m_individs[i]->repair( m_settings.repClass );
+        if ( m_params.repClass )
+            m_individs[i]->repair( m_params.repClass );
 
-        curFit = m_individs[i]->calculateFitness( m_settings.fClass );
+        curFit = m_individs[i]->calculateFitness( m_params.fClass );
 
         if ( curFit > maxFit || i == 0 )
         {

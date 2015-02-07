@@ -25,7 +25,7 @@ public:
 
 //------------------------------------------------------------
 
-struct SQGenProcessSettings
+struct SQGenParams
 {
 #ifdef GPU
     bool gpu;
@@ -40,22 +40,11 @@ struct SQGenProcessSettings
     QFitnessClass*  fClass;
     QRepairClass*   repClass;
     QProcessScreen* screenClass;
+    std::string outFile;
 
-    SQGenProcessSettings()
-        : cycThreshold(0)
-        , individsNum(0)
-        , indSize(0)
-        , topoRows(1)
-        , topoCols(1)
-        , targetFitness( BASETYPE(0) )
-        , accuracy( BASETYPE(0) )
-        , fClass(0) 
-        , repClass(0)
-        , screenClass(0)
-    #ifdef GPU
-        , gpu(false)
-    #endif
-    {}
+    SQGenParams( const char* file = 0, QFitnessClass* fC = 0, QRepairClass* rC = 0, QProcessScreen* sC = 0 );
+
+    void init( const char* file, QFitnessClass* fC, QRepairClass* rC = 0, QProcessScreen* sC = 0 );
 };
 
 //------------------------------------------------------------
@@ -63,7 +52,7 @@ struct SQGenProcessSettings
 class QGenProcess
 {
 public:
-    QGenProcess( const SQGenProcessSettings& settings, MPI_Comm comm = MPI_COMM_WORLD );
+    QGenProcess( const SQGenParams& params, MPI_Comm comm = MPI_COMM_WORLD );
     ~QGenProcess();
 
     double process();
@@ -81,7 +70,7 @@ private:
 private:
     static int m_instancesCount;
 
-    SQGenProcessSettings m_settings;
+    SQGenParams m_params;
 
     struct SQGenProcessContext;
     SQGenProcessContext* m_ctx;

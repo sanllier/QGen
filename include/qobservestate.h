@@ -5,6 +5,10 @@
 
 #include "mpi.h"
 
+#if defined( GPU ) && defined( CURAND )
+    #include "gpu_rand.h"
+#endif
+
 //------------------------------------------------------------
 
 namespace QGen {
@@ -43,6 +47,10 @@ private:
 
 #ifdef GPU
     bool* m_gpuBuf;
+#ifdef CURAND
+    GPURand m_gpuRand;
+    BASETYPE* m_randBuf;
+#endif
 #endif
 };
 

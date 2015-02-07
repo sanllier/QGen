@@ -78,7 +78,7 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>GPU;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CURAND;GPU;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)Microsoft MPI\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
@@ -99,6 +99,7 @@
     <ClCompile Include="src\gpu_rand.cpp" />
     <ClCompile Include="src\mpicheck.cpp" />
     <ClCompile Include="src\mtrand.cpp" />
+    <ClCompile Include="src\pugixml.cpp" />
     <ClCompile Include="src\qgen.cpp" />
     <ClCompile Include="src\qindivid_cpu.cpp" />
     <ClCompile Include="src\qindivid_base.cpp" />
@@ -113,6 +114,8 @@
     <ClInclude Include="include\gpu_rand.h" />
     <ClInclude Include="include\mpicheck.h" />
     <ClInclude Include="include\mtrand.h" />
+    <ClInclude Include="include\pugiconfig.hpp" />
+    <ClInclude Include="include\pugixml.hpp" />
     <ClInclude Include="include\qgen.h" />
     <ClInclude Include="include\qindivid_cpu.h" />
     <ClInclude Include="include\qindivid_base.h" />

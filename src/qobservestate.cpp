@@ -6,6 +6,9 @@
     #include "qindivid_gpu.h"
     #include "cuda_runtime.h"
     #include "cuda_error_handler.h"
+#ifdef CURAND
+    #include <time.h>
+#endif
 #endif
 
 //------------------------------------------------------------
@@ -18,6 +21,10 @@ QObserveState::QObserveState()
     , m_stateSize(0)
 #ifdef GPU
     , m_gpuBuf(0)
+#ifdef CURAND
+    , m_gpuRand( time(0) )
+    , m_randBuf(0)
+#endif
 #endif
 {
 
@@ -40,8 +47,14 @@ void QObserveState::clear()
 #ifdef GPU
     if ( m_gpuBuf )
         SAFE_CALL( cudaFree( m_gpuBuf ) );
-
     m_gpuBuf = 0;
+
+#ifdef CURAND
+    if ( m_randBuf )
+        delete[] m_randBuf;
+    m_randBuf = 0;
+#endif
+
 #endif
 }
 
@@ -56,11 +69,17 @@ void QObserveState::observe( const QBaseIndivid& ind )
     {
         case INDIVID_TYPE_CPU:
         {
+        #if defined( GPU ) && defined( CURAND )
+            m_gpuRand.generate();
+            m_gpuRand.copyInCPUData( m_randBuf );
+        #endif
             for ( long long i = 0; i < localStateSize; ++i )
             {
                 const QCPUIndivid& castedIndivid = ( const QCPUIndivid& )ind;
             #ifdef STDRAND
                 const BASETYPE randVal = BASETYPE( rand() ) / RAND_MAX;
+            #elif defined( GPU ) && defined( CURAND )
+                const BASETYPE& randVal = m_randBuf[i];
             #else
                 const BASETYPE randVal = BASETYPE( SharedMTRand::getClosedInstance()() );
             #endif
@@ -101,6 +120,10 @@ void QObserveState::resize( long long size )
         m_state = new bool[ size_t(size) ];
 #ifdef GPU
         SAFE_CALL( cudaMalloc( &m_gpuBuf, size_t(size) ) );
+#ifdef CURAND
+        m_gpuRand.resize( size );
+        m_randBuf = new BASETYPE[ size_t(size) ];
+#endif
 #endif
         m_stateSize = size;
     }
