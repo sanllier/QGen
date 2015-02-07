@@ -1,9 +1,13 @@
 #include "qindivid_cpu.h"
 #include "qgen.h"
 #include "qrotoperator.h"
-
 #include "sharedmtrand.h"
 #include "mpicheck.h"
+#ifdef GPU
+    #include "qindivid_gpu.h"
+    #include "cuda_runtime.h"
+    #include "cuda_error_handler.h"
+#endif
 
 //------------------------------------------------------------
 
@@ -73,25 +77,24 @@ void QCPUIndivid::bcast( int root )
 
 QBaseIndivid& QCPUIndivid::operator=( const QBaseIndivid& rInd )
 {
+    // CRAP
+    const QCPUIndivid& castedIndivid = ( const QCPUIndivid& )rInd;
+    if ( m_localLogicSize != castedIndivid.m_localLogicSize )
+        throw std::string( "Trying to assing individs with different topologies. " ).append( __FUNCTION__ );
+
     switch ( rInd.getType() )
     {
         case INDIVID_TYPE_CPU:
         {
-            const QCPUIndivid& castedIndivid = ( const QCPUIndivid& )rInd;
-            if ( m_localLogicSize != castedIndivid.m_localLogicSize )
-                throw std::string( "Trying to assing individs with different topologies. " ).append( __FUNCTION__ );
-
             std::memcpy( m_data, castedIndivid.m_data, size_t( m_localLogicSize * sizeof( m_data[0] ) ) );
-            m_observeState      = castedIndivid.m_observeState;
-            m_fitness           = castedIndivid.m_fitness;
-            m_needRecalcFitness = castedIndivid.m_needRecalcFitness;
             break;
         }
 
     #ifdef GPU
         case INDIVID_TYPE_GPU:
         {
-            // gpu code here
+            SAFE_CALL( cudaMemcpy( m_data, castedIndivid.m_data, 
+                size_t( m_localLogicSize * sizeof( m_data[0] ) ), cudaMemcpyDeviceToHost ) );
             break;
         }
     #endif
@@ -102,6 +105,10 @@ QBaseIndivid& QCPUIndivid::operator=( const QBaseIndivid& rInd )
             break;
         }
     }
+
+    m_observeState      = castedIndivid.m_observeState;
+    m_fitness           = castedIndivid.m_fitness;
+    m_needRecalcFitness = castedIndivid.m_needRecalcFitness;
 
     return *this;
 }

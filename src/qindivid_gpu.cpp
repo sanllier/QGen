@@ -89,6 +89,38 @@ void QGPUIndivid::bcast( int root )
 
 QBaseIndivid& QGPUIndivid::operator=( const QBaseIndivid& rInd )
 {
+    // CRAP
+    const QGPUIndivid& castedIndivid = ( const QGPUIndivid& )rInd;
+    if ( m_localLogicSize != castedIndivid.m_localLogicSize )
+        throw std::string( "Trying to assing individs with different topologies. " ).append( __FUNCTION__ );
+
+    switch ( rInd.getType() )
+    {
+        case INDIVID_TYPE_CPU:
+        {
+            SAFE_CALL( cudaMemcpy( m_data, castedIndivid.m_data, 
+                size_t( m_localLogicSize * sizeof( m_data[0] ) ), cudaMemcpyHostToDevice ) );
+            break;
+        }
+
+        case INDIVID_TYPE_GPU:
+        {
+            SAFE_CALL( cudaMemcpy( m_data, castedIndivid.m_data, 
+                size_t( m_localLogicSize * sizeof( m_data[0] ) ), cudaMemcpyDeviceToDevice ) );
+            break;
+        }
+
+        default:
+        {
+            throw std::string( "QCPUIndivid is trying to assign individ with unknown type. " ).append( __FUNCTION__ );  
+            break;
+        }
+    }
+
+    m_observeState      = castedIndivid.m_observeState;
+    m_fitness           = castedIndivid.m_fitness;
+    m_needRecalcFitness = castedIndivid.m_needRecalcFitness;
+
     return *this;
 }
 
