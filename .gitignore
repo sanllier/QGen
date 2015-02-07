@@ -1,6 +1,6 @@
 Debug/
 Release/
-MicrosoftMPI/
+Microsoft MPI/
 lib/
 *.pdb
 *.vcxproj.user
