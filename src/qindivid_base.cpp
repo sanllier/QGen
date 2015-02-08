@@ -1,6 +1,8 @@
 #include "qindivid_base.h"
 #include "mpicheck.h"
 
+#include <string.h>
+
 //------------------------------------------------------------
 
 namespace QGen {
@@ -21,7 +23,7 @@ QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowCo
     if ( generalComm == MPI_COMM_NULL )
         throw std::string( "Invalid general communicator. " ).append( __FUNCTION__ );
 
-    std::memcpy( m_context.coords, coords, 2 * sizeof( coords[0] ) );
+    memcpy( m_context.coords, coords, 2 * sizeof( coords[0] ) );
     
     int remainIndDims[2] = { 1, 0 };
     CHECK( MPI_Cart_sub( generalComm, remainIndDims, &m_context.indComm ) ); 

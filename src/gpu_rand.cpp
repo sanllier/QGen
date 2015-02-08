@@ -1,3 +1,5 @@
+#ifdef GPU
+
 #include "gpu_rand.h"
 #include "curand.h"
 #include "cuda_error_handler.h"
@@ -26,7 +28,7 @@ GPURand::~GPURand()
 {
     SAFE_CURAND_CALL( curandDestroyGenerator( *( curandGenerator_t * )m_gen ) );
     SAFE_CALL( cudaFree( m_randomBuf ) );
-    delete m_gen;
+    delete ( curandGenerator_t * )m_gen;
 }
 
 //------------------------------------------------------------
@@ -62,3 +64,7 @@ void GPURand::copyInCPUData( BASETYPE* data ) const
 
 //------------------------------------------------------------
 }
+
+//------------------------------------------------------------
+
+#endif

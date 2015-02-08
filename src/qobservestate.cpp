@@ -2,6 +2,7 @@
 #include "qindivid_cpu.h"
 #include "sharedmtrand.h"
 #include "mpicheck.h"
+#include <string.h>
 #ifdef GPU
     #include "qindivid_gpu.h"
     #include "cuda_runtime.h"
@@ -161,7 +162,7 @@ void QObserveState::bcast( int root, MPI_Comm comm )
 QObserveState& QObserveState::operator=( const QObserveState& rState )
 {
     resize( rState.m_stateSize );
-    std::memcpy( m_state, rState.m_state, size_t(m_stateSize) );
+    memcpy( m_state, rState.m_state, size_t(m_stateSize) );
     return *this;
 }
 

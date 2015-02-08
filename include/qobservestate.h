@@ -36,7 +36,9 @@ public:
 
     QObserveState& operator=( const QObserveState& rState );
 
+#ifdef GPU
     const bool* gpuBuffer() const { return m_gpuBuf; }
+#endif
 
 private:
     void resize( long long size );
