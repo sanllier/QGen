@@ -80,9 +80,10 @@ QGPUIndivid::~QGPUIndivid()
 
 //------------------------------------------------------------
 
-void QGPUIndivid::resize( long long newSize )
+bool QGPUIndivid::resize( long long newSize )
 {
-    QBaseIndivid::resize( newSize );
+    if ( !QBaseIndivid::resize( newSize ) )
+        return false;
 
     if ( m_data )
         SAFE_CALL( cudaFree( m_data ) );
@@ -105,6 +106,7 @@ void QGPUIndivid::resize( long long newSize )
     m_cpuBuf = new QBit[ size_t( m_localLogicSize ) ];
 
     m_rand.resize( newSize );
+    return true;
 }
 
 //------------------------------------------------------------
@@ -127,12 +129,10 @@ void QGPUIndivid::evolve( const QBaseIndivid& bestInd )
 
 //------------------------------------------------------------
 
-void QGPUIndivid::bcast( int root )
+bool QGPUIndivid::bcast( int root )
 {
-    if ( m_context.rowComm == MPI_COMM_NULL )
-        return;
-
-    QBaseIndivid::bcast( root );
+    if ( !QBaseIndivid::bcast( root ) )
+        return false;
 
     int rank = 0;
     CHECK( MPI_Comm_rank( m_context.rowComm, &rank ) );
@@ -142,6 +142,7 @@ void QGPUIndivid::bcast( int root )
 
     CHECK( MPI_Bcast( m_cpuBuf, int( m_localLogicSize ), MPI_QBIT, root, m_context.rowComm ) );
     SAFE_CALL( cudaMemcpy( m_data, m_cpuBuf, size_t( m_localLogicSize * sizeof( QBit ) ), cudaMemcpyHostToDevice ) );
+    return true;
 }
 
 //-----------------------------------------------------------

@@ -46,7 +46,7 @@ public:
 
     virtual EIndividType getType() const = 0;
 
-    virtual void resize( long long newSize );
+    virtual bool resize( long long newSize );
     virtual void setInitial() = 0;
     
     inline long long qSize() const { return m_globalLogicSize; }
@@ -63,7 +63,7 @@ public:
     virtual void evolve( const QBaseIndivid& bestInd ) = 0;
     void repair( QRepairClass* repClass );
 
-    virtual void bcast( int root );
+    virtual bool bcast( int root );
 
     virtual QBaseIndivid& operator=( const QBaseIndivid& rInd ) = 0;
 

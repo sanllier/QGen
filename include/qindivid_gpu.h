@@ -19,12 +19,12 @@ public:
 
     EIndividType getType() const override { return INDIVID_TYPE_GPU; };
 
-    void resize( long long newSize ) override;
+    bool resize( long long newSize ) override;
     void setInitial() override;
     
     void evolve( const QBaseIndivid& bestInd ) override;
 
-    void bcast( int root ) override;
+    bool bcast( int root ) override;
 
     QBaseIndivid& operator=( const QBaseIndivid& rInd ) override;
 

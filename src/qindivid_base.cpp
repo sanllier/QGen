@@ -51,10 +51,13 @@ QBaseIndivid::~QBaseIndivid()
 
 //------------------------------------------------------------
 
-void QBaseIndivid::resize( long long newSize )
+bool QBaseIndivid::resize( long long newSize )
 {
    if ( newSize <= 0 )
        throw std::string( "QBaseIndivid trying to resize with incorrect parameter. " ).append( __FUNCTION__ );
+
+   if ( m_globalLogicSize == newSize )
+       return false;
 
     int commSize = 0;
     CHECK( MPI_Comm_size( m_context.indComm, &commSize ) );
@@ -65,6 +68,7 @@ void QBaseIndivid::resize( long long newSize )
     m_localLogicSize = newSize / commSize + ( procGridHeight < newSize % commSize ? 1 : 0 );
     m_firstQbit = ( newSize / commSize ) * procGridHeight + std::min( newSize % commSize, ( long long )procGridHeight ); 
     m_needRecalcFitness = true;
+    return true;
 }
 
 //------------------------------------------------------------
@@ -122,8 +126,11 @@ void QBaseIndivid::repair( QRepairClass* repClass )
 
 //------------------------------------------------------------
 
-void QBaseIndivid::bcast( int root )
+bool QBaseIndivid::bcast( int root )
 {
+    if ( m_context.rowComm == MPI_COMM_NULL )
+        return false;
+
     int rowCommSize = 0;
     CHECK( MPI_Comm_size( m_context.rowComm, &rowCommSize ) );
     if ( root < 0 || root >= rowCommSize )
@@ -131,7 +138,8 @@ void QBaseIndivid::bcast( int root )
     
     m_observeState.bcast( root, m_context.rowComm );
     CHECK( MPI_Bcast( &m_fitness, 1, MPI_BASETYPE, root, m_context.rowComm ) );
-    CHECK( MPI_Bcast( &m_needRecalcFitness, 1, MPI_CHAR, root, m_context.rowComm ) );    
+    CHECK( MPI_Bcast( &m_needRecalcFitness, 1, MPI_CHAR, root, m_context.rowComm ) );   
+    return true;
 }
 
 //------------------------------------------------------------

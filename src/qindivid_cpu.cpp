@@ -30,12 +30,14 @@ QCPUIndivid::~QCPUIndivid()
 
 //------------------------------------------------------------
 
-void QCPUIndivid::resize( long long newSize )
+bool QCPUIndivid::resize( long long newSize )
 {
-    QBaseIndivid::resize( newSize );
+    if ( !QBaseIndivid::resize( newSize ) )
+        return false;
 
     delete[] m_data;
     m_data = new QBit[ size_t( m_localLogicSize ) ];
+    return true;
 }
 
 //------------------------------------------------------------
@@ -66,14 +68,13 @@ void QCPUIndivid::evolve( const QBaseIndivid& bestInd )
 
 //------------------------------------------------------------
 
-void QCPUIndivid::bcast( int root )
+bool QCPUIndivid::bcast( int root )
 {
-    if ( m_context.rowComm == MPI_COMM_NULL )
-        return;
-
-    QBaseIndivid::bcast( root );
+    if ( !QBaseIndivid::bcast( root ) )
+        return false;
 
     CHECK( MPI_Bcast( m_data, int( m_localLogicSize ), MPI_QBIT, root, m_context.rowComm ) );
+    return true;
 }
 
 //-----------------------------------------------------------
