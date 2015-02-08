@@ -2,7 +2,6 @@
 #define GPU_RAND_H
 
 #include "defs_gpu.h"
-#include "curand.h"
 
 //------------------------------------------------------------
 
@@ -23,7 +22,7 @@ public:
     void copyInCPUData( BASETYPE* data ) const;
 
 private:
-    curandGenerator_t m_gen;
+    void* m_gen;
 
     long long m_size;
     BASETYPE* m_randomBuf;    

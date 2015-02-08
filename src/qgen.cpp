@@ -364,6 +364,9 @@ double QGenProcess::process()
 {
     ACTIVE_ONLY_R( 0.0 );
 
+    if ( m_params.individsNum < 1 )
+        throw std::string( "QGenProcess trying to process with too small number of individs(must be >=1). " ).append( __FUNCTION__ ); 
+
     double startTime = MPI_Wtime();
 
     for ( long long cycle = 1; cycle <= m_params.cycThreshold; ++cycle )

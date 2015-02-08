@@ -1,4 +1,5 @@
 #include "gpu_rand.h"
+#include "curand.h"
 #include "cuda_error_handler.h"
 
 //------------------------------------------------------------
@@ -7,11 +8,14 @@ namespace QGen {
 //------------------------------------------------------------
 
 GPURand::GPURand( unsigned long long seed, long long size/* = 0*/ )
-    : m_randomBuf(0)
+    : m_gen(0)
+    , m_randomBuf(0)
     , m_size(0)
 {
-    SAFE_CURAND_CALL( curandCreateGenerator( &m_gen, CURAND_RNG_PSEUDO_DEFAULT ) );
-    SAFE_CURAND_CALL( curandSetPseudoRandomGeneratorSeed( m_gen, seed ) );
+    m_gen = new curandGenerator_t;
+
+    SAFE_CURAND_CALL( curandCreateGenerator( ( curandGenerator_t * )m_gen, CURAND_RNG_PSEUDO_DEFAULT ) );
+    SAFE_CURAND_CALL( curandSetPseudoRandomGeneratorSeed( *( curandGenerator_t * )m_gen, seed ) );
     if ( size > 0 )
         resize( size );
 }
@@ -20,8 +24,9 @@ GPURand::GPURand( unsigned long long seed, long long size/* = 0*/ )
 
 GPURand::~GPURand()
 {
-    SAFE_CURAND_CALL( curandDestroyGenerator( m_gen ) );
+    SAFE_CURAND_CALL( curandDestroyGenerator( *( curandGenerator_t * )m_gen ) );
     SAFE_CALL( cudaFree( m_randomBuf ) );
+    delete m_gen;
 }
 
 //------------------------------------------------------------
@@ -31,7 +36,7 @@ void GPURand::generate() const
    if ( m_size <= 0 )
        throw std::string( "GPURand trying to generate with unsetted size. " ).append( __FUNCTION__ );
 
-    SAFE_CURAND_CALL( curandGenerateUniform( m_gen, m_randomBuf, m_size ));
+    SAFE_CURAND_CALL( curandGenerateUniform( *( curandGenerator_t * )m_gen, m_randomBuf, m_size ));
 }
 
 //------------------------------------------------------------
