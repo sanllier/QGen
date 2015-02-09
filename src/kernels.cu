@@ -22,7 +22,7 @@ __global__ void setInitialKernel( GPUQbit* data, const BASETYPE* rands, long lon
 extern "C" void launchSetInitialKernel( GPUQbit* data, const BASETYPE* rands, long long size )
 {
     dim3 block = dim3 ( CUDA_BLOCK_SIZE );
-    dim3 grid = dim3 ( size / CUDA_BLOCK_SIZE + 1 );
+    dim3 grid = dim3 ( size_t( size ) / CUDA_BLOCK_SIZE + 1 );
     SAFE_KERNEL_CALL( ( setInitialKernel<<< grid, block >>>( data, rands, size ) ) );
 }
 
@@ -44,7 +44,7 @@ __global__ void observeKernel( const GPUQbit* data, const BASETYPE* rands, bool*
 extern "C" void launchObserveKernel( const GPUQbit* data, const BASETYPE* rands, bool* buf, long long size )
 {
     dim3 block = dim3 ( CUDA_BLOCK_SIZE );
-    dim3 grid = dim3 ( size / CUDA_BLOCK_SIZE + 1 );
+    dim3 grid = dim3 ( size_t( size ) / CUDA_BLOCK_SIZE + 1 );
     SAFE_KERNEL_CALL( ( observeKernel<<< grid, block >>>( data, rands, buf, size ) ) );
 }
 
@@ -78,7 +78,7 @@ extern "C" void launchThetaBufferKernel( const GPUQbit* data, const GPUQbit* bes
                                         BASETYPE* out, long long size )
 {
     dim3 block = dim3 ( CUDA_BLOCK_SIZE );
-    dim3 grid = dim3 ( size / CUDA_BLOCK_SIZE + 1 );
+    dim3 grid = dim3 ( size_t( size ) / CUDA_BLOCK_SIZE + 1 );
     SAFE_KERNEL_CALL( ( thetaBufferKernel<<< grid, block >>>( data, best, obs, bestObs, theta, isBetter, out, size ) ) );
 }
 
@@ -113,7 +113,7 @@ __global__ void evolveKernel( GPUQbit* data, const BASETYPE* theta, long long si
 extern "C" void launchEvolveKernel( GPUQbit* data, const BASETYPE* theta, long long size )
 {
     dim3 block = dim3 ( CUDA_BLOCK_SIZE );
-    dim3 grid = dim3 ( size / CUDA_BLOCK_SIZE + 1 );
+    dim3 grid = dim3 ( size_t( size ) / CUDA_BLOCK_SIZE + 1 );
     SAFE_KERNEL_CALL( ( evolveKernel<<< grid, block >>>( data, theta, size ) ) );
 }
 

@@ -98,7 +98,7 @@ void QObserveState::observe( const QBaseIndivid& ind )
         {
             const QGPUIndivid& castedIndivid = ( const QGPUIndivid& )ind;            
             castedIndivid.runObserveKernel( m_gpuBuf );
-            SAFE_CALL( cudaMemcpy( m_state, m_gpuBuf, m_stateSize, cudaMemcpyDeviceToHost ) );
+            SAFE_CALL( cudaMemcpy( m_state, m_gpuBuf, size_t( m_stateSize ), cudaMemcpyDeviceToHost ) );
             break;
         }
     #endif

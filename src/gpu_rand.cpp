@@ -38,7 +38,7 @@ void GPURand::generate() const
    if ( m_size <= 0 )
        throw std::string( "GPURand trying to generate with unsetted size. " ).append( __FUNCTION__ );
 
-    SAFE_CURAND_CALL( curandGenerateUniform( *( curandGenerator_t * )m_gen, m_randomBuf, m_size ));
+    SAFE_CURAND_CALL( curandGenerateUniform( *( curandGenerator_t * )m_gen, m_randomBuf, size_t( m_size ) ));
 }
 
 //------------------------------------------------------------

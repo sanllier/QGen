@@ -199,7 +199,7 @@ void QGPUIndivid::computeThetaBuffer( const QGPUIndivid& bestInd ) const
     for ( long long i = 0; i < m_localLogicSize; ++i )
         m_isBetterBuf[i] = m_fitness > bestInd.m_fitness;
 
-    SAFE_CALL( cudaMemcpy( m_isBetterGPUBuf, m_isBetterBuf, m_localLogicSize, cudaMemcpyHostToDevice ) );
+    SAFE_CALL( cudaMemcpy( m_isBetterGPUBuf, m_isBetterBuf, size_t( m_localLogicSize ), cudaMemcpyHostToDevice ) );
 
     launchThetaBufferKernel( ( GPUQbit* )m_data, ( GPUQbit* )bestInd.m_data, 
         m_observeState.gpuBuffer(), bestInd.m_observeState.gpuBuffer(), m_gpuThetaFiled, 
