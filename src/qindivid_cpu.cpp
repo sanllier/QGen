@@ -3,6 +3,7 @@
 #include "qrotoperator.h"
 #include "sharedmtrand.h"
 #include "mpicheck.h"
+#include <string.h>
 #ifdef GPU
     #include "qindivid_gpu.h"
     #include "cuda_runtime.h"
@@ -90,7 +91,7 @@ QBaseIndivid& QCPUIndivid::operator=( const QBaseIndivid& rInd )
     {
         case INDIVID_TYPE_CPU:
         {
-            std::memcpy( m_data, castedIndivid.m_data, size_t( m_localLogicSize * sizeof( m_data[0] ) ) );
+            memcpy( m_data, castedIndivid.m_data, size_t( m_localLogicSize * sizeof( m_data[0] ) ) );
             break;
         }
 
