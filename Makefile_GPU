@@ -6,7 +6,7 @@ OBJECTS = obj/qgen.o obj/qindivid_base.o \
           obj/gpu_rand.o obj/pugixml.o \
           obj/mpicheck.o obj/mtrand.o obj/kernels.o
 DFLAG      = -DGPU
-CFLAG      = -std=c++11 -Iinclude/ -O3
+CFLAG      = -Iinclude/ -O3
 CUDA       = -I/opt/cuda/cuda-6.5/include
 CC         = mpicxx
 CUDACC     = g++

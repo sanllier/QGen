@@ -2,6 +2,10 @@
 #define DEFS_H
 //------------------------------------------------------------
 
+#define OVERRIDE
+
+//------------------------------------------------------------
+
 #define BASETYPE float
 #define MPI_BASETYPE MPI_FLOAT
 

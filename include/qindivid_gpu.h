@@ -13,20 +13,20 @@ class QGPUIndivid: public QBaseIndivid
 {
 public:
     QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] );
-    ~QGPUIndivid() override;
+    ~QGPUIndivid() OVERRIDE;
 
         // QBaseIndivid
 
-    EIndividType getType() const override { return INDIVID_TYPE_GPU; };
+    EIndividType getType() const OVERRIDE { return INDIVID_TYPE_GPU; };
 
-    bool resize( long long newSize ) override;
-    void setInitial() override;
+    bool resize( long long newSize ) OVERRIDE;
+    void setInitial() OVERRIDE;
     
-    void evolve( const QBaseIndivid& bestInd ) override;
+    void evolve( const QBaseIndivid& bestInd ) OVERRIDE;
 
-    bool bcast( int root ) override;
+    bool bcast( int root ) OVERRIDE;
 
-    QBaseIndivid& operator=( const QBaseIndivid& rInd ) override;
+    QBaseIndivid& operator=( const QBaseIndivid& rInd ) OVERRIDE;
 
 public:
     void runObserveKernel( bool* gpuData ) const;
