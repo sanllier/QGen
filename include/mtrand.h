@@ -42,7 +42,7 @@
 // Feedback about the C++ port should be sent to Jasper Bedaux,
 // see http://www.bedaux.net/mtrand/ for e-mail address and info.
 
-#ifndef MTRAND_H
+#if !defined( MTRAND_H ) && !defined( NOTMTRAND )
 #define MTRAND_H
 
 class MTRand_int32 { // Mersenne Twister random number generator

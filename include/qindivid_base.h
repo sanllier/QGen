@@ -12,29 +12,16 @@
 namespace QGen {
 //------------------------------------------------------------
 
-class QFitnessClass
-{
-public:
-    virtual ~QFitnessClass() {}
-    virtual BASETYPE operator()( MPI_Comm indComm, const QObserveState& observeState, long long startQBit, int idx ) = 0;
-};
-
-//------------------------------------------------------------
-
-class QRepairClass
-{
-public:
-    virtual ~QRepairClass() {}
-    virtual void operator()( MPI_Comm indComm, QObserveState& observeState, long long startQBit, int idx ) = 0;
-};
-
-//------------------------------------------------------------
-
 enum EIndividType
 {
     INDIVID_TYPE_CPU,
     INDIVID_TYPE_GPU
 };
+
+//------------------------------------------------------------
+
+class IFitness;
+class IRepair;
 
 //------------------------------------------------------------
 
@@ -53,7 +40,7 @@ public:
     inline long long locaQSize() const { return m_localLogicSize; }
     inline long long firstQBit() const { return m_firstQbit; }
 
-    BASETYPE calculateFitness( QFitnessClass* fClass );
+    BASETYPE calculateFitness( IFitness* fClass );
     BASETYPE getFitness() const { return m_fitness; } // unsafe, m_fitness may be dirty
 
     void calculateObservState();
@@ -61,7 +48,7 @@ public:
     const QObserveState& getObservState() const;
 
     virtual void evolve( const QBaseIndivid& bestInd ) = 0;
-    void repair( QRepairClass* repClass );
+    void repair( IRepair* repClass );
 
     virtual bool bcast( int root );
 

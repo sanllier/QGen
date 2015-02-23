@@ -106,12 +106,14 @@
     <ClCompile Include="src\qindivid_gpu.cpp" />
     <ClCompile Include="src\qobservestate.cpp" />
     <ClCompile Include="src\qrotoperator.cpp" />
+    <ClCompile Include="src\sparams.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\cuda_error_handler.h" />
     <ClInclude Include="include\defs.h" />
     <ClInclude Include="include\defs_gpu.h" />
     <ClInclude Include="include\gpu_rand.h" />
+    <ClInclude Include="include\interfaces.h" />
     <ClInclude Include="include\mpicheck.h" />
     <ClInclude Include="include\mtrand.h" />
     <ClInclude Include="include\pugiconfig.hpp" />
@@ -123,6 +125,7 @@
     <ClInclude Include="include\qobservestate.h" />
     <ClInclude Include="include\qrotoperator.h" />
     <ClInclude Include="include\sharedmtrand.h" />
+    <ClInclude Include="include\sparams.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\kernels.cu">

@@ -1,5 +1,6 @@
 #include "qindivid_base.h"
 #include "mpicheck.h"
+#include "interfaces.h"
 
 #include <string.h>
 
@@ -75,7 +76,7 @@ bool QBaseIndivid::resize( long long newSize )
 
 //------------------------------------------------------------
 
-BASETYPE QBaseIndivid::calculateFitness( QFitnessClass* fClass )
+BASETYPE QBaseIndivid::calculateFitness( IFitness* fClass )
 {
     if ( !fClass )
         throw std::string( "QXIndivid is trying to calculate fitness with (NULL) func" ).append( __FUNCTION__ );  
@@ -117,7 +118,7 @@ const QObserveState& QBaseIndivid::getObservState() const
 
 //-----------------------------------------------------------
 
-void QBaseIndivid::repair( QRepairClass* repClass )
+void QBaseIndivid::repair( IRepair* repClass )
 {
     if ( !repClass )
         throw std::string( "QXIndivid is trying to repair with (NULL) func" ).append( __FUNCTION__ );

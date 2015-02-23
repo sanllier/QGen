@@ -1,5 +1,7 @@
 // mtrand.cpp, see include file mtrand.h for information
 
+#ifndef NOTMTRAND
+
 #include "mtrand.h"
 // non-inline function definitions and static member definitions cannot
 // reside in header file because of the risk of multiple declarations
@@ -48,3 +50,5 @@ void MTRand_int32::seed(const unsigned long* array, int size) { // init by array
   state[0] = 0x80000000UL; // MSB is 1; assuring non-zero initial array
   p = n; // force gen_state() to be called for next random number
 }
+
+#endif

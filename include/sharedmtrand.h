@@ -1,4 +1,4 @@
-#ifndef SHAREDMTRAND_H
+#if !defined( SHAREDMTRAND_H ) && !defined( NOTMTRAND )
 #define SHAREDMTRAND_H
 
 #include "mtrand.h"
