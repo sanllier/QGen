@@ -1,6 +1,5 @@
 #include "qgen.h"
 #include "qindivid_cpu.h"
-#include "sharedmtrand.h"
 #include "mpicheck.h"
 #include "pugixml.hpp"
 #include "interfaces.h"
@@ -102,8 +101,6 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
     int initialCommSize = 0;
     CHECK( MPI_Comm_rank( comm, &initialCommRank ) );
     CHECK( MPI_Comm_size( comm, &initialCommSize ) );
-
-    SharedMTRand::getClosedInstance( initialCommRank + 1 ); //setting seed
 
     const int requestedCommSize = m_params.topoCols * m_params.topoRows;
 

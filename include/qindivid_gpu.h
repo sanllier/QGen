@@ -2,7 +2,6 @@
 #define QINDIVID_GPU_H
 
 #include "qindivid_base.h"
-#include "gpu_rand.h"
 
 //------------------------------------------------------------
 
@@ -45,7 +44,8 @@ private:
     bool* m_isBetterGPUBuf;
     bool* m_isBetterBuf;
 
-    GPURand m_rand;
+    void* m_gen;
+    BASETYPE* m_randomBufGPU;
 };
 
 //------------------------------------------------------------

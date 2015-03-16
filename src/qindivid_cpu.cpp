@@ -1,13 +1,21 @@
 #include "qindivid_cpu.h"
 #include "qgen.h"
 #include "qrotoperator.h"
-#include "sharedmtrand.h"
 #include "mpicheck.h"
 #include <string.h>
+#include <time.h>
 #ifdef GPU
     #include "qindivid_gpu.h"
     #include "cuda_runtime.h"
     #include "cuda_error_handler.h"
+#endif
+
+#if defined( GPU ) && defined( CURAND )
+    #include "random_curand.h"
+#elseif defined( STDRAND )
+    #include "random_def.h"
+#else 
+    #include "random_mtrand.h"
 #endif
 
 //------------------------------------------------------------
@@ -45,13 +53,26 @@ bool QCPUIndivid::resize( long long newSize )
 
 void QCPUIndivid::setInitial()
 {
+    IRandom* random = 0;
+#if defined( GPU ) && defined( CURAND )
+    random = new RandomCURand();
+    ( (RandomCURand*)random )->setSize( m_localLogicSize );
+#elseif defined( STDRAND )
+    random = new RandomDefault();
+#else 
+    random = new RandomMTRand();
+#endif
+
+    random->setSeed( (unsigned)time(0) ^ ( m_context.coords[0] + m_context.coords[1] ) );  
+
     for ( long long i = 0; i < m_localLogicSize; ++i )
     {
-        m_data[i].a = ( BASETYPE )( SharedMTRand::getClosedInstance()() );
+        m_data[i].a = random->next();
         m_data[i].b = std::sqrt( QComplex( BASETYPE(1) ) - m_data[i].a );
     }
 
     m_needRecalcFitness = true;
+    delete random;
 }
 
 //------------------------------------------------------------
@@ -111,7 +132,7 @@ QBaseIndivid& QCPUIndivid::operator=( const QBaseIndivid& rInd )
         }
     }
 
-    m_observeState      = castedIndivid.m_observeState;
+    *m_observeState     = *castedIndivid.m_observeState;
     m_fitness           = castedIndivid.m_fitness;
     m_needRecalcFitness = castedIndivid.m_needRecalcFitness;
 
@@ -122,8 +143,8 @@ QBaseIndivid& QCPUIndivid::operator=( const QBaseIndivid& rInd )
 
 BASETYPE QCPUIndivid::getThetaForQBit( const QCPUIndivid& bestInd, long long qbitIndex ) const
 {
-    const bool curIndBit      = m_observeState.at( qbitIndex );
-    const bool bestIndBit     = bestInd.m_observeState.at( qbitIndex );
+    const bool curIndBit      = m_observeState->at( qbitIndex );
+    const bool bestIndBit     = bestInd.m_observeState->at( qbitIndex );
     const bool betterThanBest = m_fitness > bestInd.m_fitness;
 
     BASETYPE theta = m_thetaField[ curIndBit ? 1:0 ][ bestIndBit ? 1:0 ][ betterThanBest ? 1:0 ];

@@ -3,12 +3,10 @@
 
 #include "mpi.h"
 #include "mpicheck.h"
-
-#include <string>
-#include <complex>
-
 #include "interfaces.h"
 #include "defs.h"
+
+#include <string>
 
 //------------------------------------------------------------
 

@@ -1,26 +1,28 @@
-#ifndef QROTOPERATOR_H
-#define QROTOPERATOR_H
+#ifndef QBIT_H
+#define QBIT_H
 
-#include "qbit.h"
 #include "defs.h"
+#include <complex>
 
 //------------------------------------------------------------
 
 namespace QGen {
 //------------------------------------------------------------
 
-class QRotOperator
+typedef std::complex< BASETYPE > QComplex;
+
+//------------------------------------------------------------
+
+struct QBit
 {
-public:
-    QRotOperator( BASETYPE angle = BASETYPE(0) );
-    virtual ~QRotOperator() {}
+    QComplex a;
+    QComplex b;
 
-    void compute( BASETYPE angle );
-
-    QBit operator*( const QBit& ampl ) const;
-
-private:
-    BASETYPE m_matrix[2][2];
+    QBit() {}
+    QBit( QComplex a, QComplex b )
+        : a(a)
+        , b(b)
+    {}
 };
 
 //------------------------------------------------------------

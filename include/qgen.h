@@ -1,7 +1,6 @@
 #ifndef QGEN_H
 #define QGEN_H
 
-#include <complex>
 #include <vector>
 
 #include "mpi.h"

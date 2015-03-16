@@ -4,10 +4,10 @@
 #include "qgen.h"
 #include "defs_gpu.h"
 
+#include "curand.h"
 #include "cuda_runtime.h"
 #include "cuda_error_handler.h"
 
-#include "sharedmtrand.h"
 #include "mpicheck.h"
 
 #include <time.h>
@@ -40,7 +40,8 @@ QGPUIndivid::QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm
     , m_thetaBuf(0)
     , m_isBetterGPUBuf(0)
     , m_isBetterBuf(0)
-    , m_rand( unsigned( time(0) ) ^ unsigned( coords[0] ))
+    , m_gen(0)
+    , m_randomBufGPU(0)
 {
     if ( deviceId == -1 )
     {
@@ -53,6 +54,9 @@ QGPUIndivid::QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm
         SAFE_CALL( cudaMalloc( &m_gpuThetaFiled, 8 * sizeof( BASETYPE ) ) );
         SAFE_CALL( cudaMemcpy( m_gpuThetaFiled, m_thetaField, 8 * sizeof( BASETYPE ), cudaMemcpyHostToDevice ) );
     }
+
+    m_gen = new curandGenerator_t;
+    SAFE_CURAND_CALL( curandCreateGenerator( ( curandGenerator_t * )m_gen, CURAND_RNG_PSEUDO_DEFAULT ) );
 
     resize( size );
     setInitial(); 
@@ -70,6 +74,9 @@ QGPUIndivid::~QGPUIndivid()
 
     if ( m_isBetterGPUBuf )
         SAFE_CALL( cudaFree( m_isBetterGPUBuf ) );
+
+    SAFE_CURAND_CALL( curandDestroyGenerator( *( curandGenerator_t * )m_gen ) );
+    SAFE_CALL( cudaFree( m_randomBufGPU ) );
 
     if ( m_isBetterBuf )
         delete[] m_isBetterBuf;
@@ -105,7 +112,10 @@ bool QGPUIndivid::resize( long long newSize )
         delete[] m_cpuBuf;
     m_cpuBuf = new QBit[ size_t( m_localLogicSize ) ];
 
-    m_rand.resize( newSize );
+    if ( m_randomBufGPU )
+        SAFE_CALL( cudaFree( m_randomBufGPU ) );
+    SAFE_CALL( cudaMalloc( &m_randomBufGPU, size_t( newSize * sizeof( BASETYPE ) ) ) );
+
     return true;
 }
 
@@ -113,8 +123,8 @@ bool QGPUIndivid::resize( long long newSize )
 
 void QGPUIndivid::setInitial()
 {
-    m_rand.generate();
-    launchSetInitialKernel( ( GPUQbit* )m_data, m_rand.getGPUData(), m_localLogicSize );
+    SAFE_CURAND_CALL( curandGenerateUniform( *( curandGenerator_t * )m_gen, m_randomBufGPU, size_t( m_localLogicSize ) ));
+    launchSetInitialKernel( ( GPUQbit* )m_data, m_randomBufGPU, m_localLogicSize );
     m_needRecalcFitness = true;
 }
 
@@ -177,7 +187,7 @@ QBaseIndivid& QGPUIndivid::operator=( const QBaseIndivid& rInd )
         }
     }
 
-    m_observeState      = castedIndivid.m_observeState;
+    *m_observeState     = *castedIndivid.m_observeState;
     m_fitness           = castedIndivid.m_fitness;
     m_needRecalcFitness = castedIndivid.m_needRecalcFitness;
 
@@ -188,8 +198,8 @@ QBaseIndivid& QGPUIndivid::operator=( const QBaseIndivid& rInd )
 
 void QGPUIndivid::runObserveKernel( bool* gpuData ) const
 {
-    m_rand.generate();
-    launchObserveKernel( ( GPUQbit* )m_data, m_rand.getGPUData(), gpuData, m_localLogicSize );
+    SAFE_CURAND_CALL( curandGenerateUniform( *( curandGenerator_t * )m_gen, m_randomBufGPU, size_t( m_localLogicSize ) ));
+    launchObserveKernel( ( GPUQbit* )m_data, m_randomBufGPU, gpuData, m_localLogicSize );
 }
 
 //-----------------------------------------------------------
@@ -202,7 +212,7 @@ void QGPUIndivid::computeThetaBuffer( const QGPUIndivid& bestInd ) const
     SAFE_CALL( cudaMemcpy( m_isBetterGPUBuf, m_isBetterBuf, size_t( m_localLogicSize ), cudaMemcpyHostToDevice ) );
 
     launchThetaBufferKernel( ( GPUQbit* )m_data, ( GPUQbit* )bestInd.m_data, 
-        m_observeState.gpuBuffer(), bestInd.m_observeState.gpuBuffer(), m_gpuThetaFiled, 
+        m_observeState->gpuBuffer(), bestInd.m_observeState->gpuBuffer(), m_gpuThetaFiled, 
         m_isBetterGPUBuf, m_thetaBuf, m_localLogicSize );
 }
 

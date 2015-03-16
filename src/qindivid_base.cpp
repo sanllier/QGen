@@ -3,6 +3,7 @@
 #include "interfaces.h"
 
 #include <string.h>
+#include <time.h>
 
 //------------------------------------------------------------
 
@@ -18,6 +19,7 @@ QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowCo
     : m_data(0)
     , m_fitness( BASETYPE(0) )
     , m_needRecalcFitness( true )
+    , m_observeState(0)
 {
     if ( size < 0 )
         throw std::string( "Invalid individ size. " ).append( __FUNCTION__ );
@@ -28,6 +30,8 @@ QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowCo
     
     int remainIndDims[2] = { 1, 0 };
     CHECK( MPI_Cart_sub( generalComm, remainIndDims, &m_context.indComm ) ); 
+
+    m_observeState = new QObserveState( (unsigned)time(0) ^ ( m_context.coords[0] + m_context.coords[1] ) );
 
     if ( MPI_QBIT == MPI_DATATYPE_NULL )
     {
@@ -49,7 +53,7 @@ QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowCo
 
 QBaseIndivid::~QBaseIndivid()
 {
-
+    delete m_observeState;
 }
 
 //------------------------------------------------------------
@@ -86,7 +90,7 @@ BASETYPE QBaseIndivid::calculateFitness( IFitness* fClass )
 
     if ( needRecalc )
     {
-        m_fitness = (*fClass)( m_context.indComm, m_observeState, m_firstQbit, m_context.coords[0] );
+        m_fitness = (*fClass)( m_context.indComm, *m_observeState, m_firstQbit, m_context.coords[0] );
         m_needRecalcFitness = false;
     }
 
@@ -97,7 +101,7 @@ BASETYPE QBaseIndivid::calculateFitness( IFitness* fClass )
 
 void QBaseIndivid::calculateObservState()
 {
-    m_observeState.observe( *this );
+    m_observeState->observe( *this );
     m_needRecalcFitness = true;
 }
 
@@ -106,14 +110,14 @@ void QBaseIndivid::calculateObservState()
 QObserveState& QBaseIndivid::getObservState()
 {
     m_needRecalcFitness = true;
-    return m_observeState;
+    return *m_observeState;
 }
 
 //------------------------------------------------------------
 
 const QObserveState& QBaseIndivid::getObservState() const
 {
-    return m_observeState;
+    return *m_observeState;
 }
 
 //-----------------------------------------------------------
@@ -123,7 +127,7 @@ void QBaseIndivid::repair( IRepair* repClass )
     if ( !repClass )
         throw std::string( "QXIndivid is trying to repair with (NULL) func" ).append( __FUNCTION__ );
 
-    (*repClass)( m_context.indComm, m_observeState, m_firstQbit, m_context.coords[0] );
+    (*repClass)( m_context.indComm, *m_observeState, m_firstQbit, m_context.coords[0] );
     m_needRecalcFitness = true;
 }
 
@@ -139,7 +143,7 @@ bool QBaseIndivid::bcast( int root )
     if ( root < 0 || root >= rowCommSize )
         throw std::string( "QXIndivid is trying to bcast with invalid params" ).append( __FUNCTION__ ); 
     
-    m_observeState.bcast( root, m_context.rowComm );
+    m_observeState->bcast( root, m_context.rowComm );
     CHECK( MPI_Bcast( &m_fitness, 1, MPI_BASETYPE, root, m_context.rowComm ) );
     CHECK( MPI_Bcast( &m_needRecalcFitness, 1, MPI_CHAR, root, m_context.rowComm ) );   
     return true;

@@ -1,9 +1,8 @@
 #ifndef QINDIVID_BASE_H
 #define QINDIVID_BASE_H
 
-#include <complex>
-
 #include "mpi.h"
+#include "qbit.h"
 #include "qobservestate.h"
 #include "defs.h"
 
@@ -63,7 +62,7 @@ protected:
     long long m_globalLogicSize;
     long long m_firstQbit;
 
-    QObserveState m_observeState;
+    QObserveState* m_observeState;
 
     BASETYPE m_fitness;
     bool m_needRecalcFitness;

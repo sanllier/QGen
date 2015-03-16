@@ -1,15 +1,11 @@
 #include "qobservestate.h"
-#include "qindivid_cpu.h"
-#include "sharedmtrand.h"
 #include "mpicheck.h"
+#include "qindivid_cpu.h"
 #include <string.h>
 #ifdef GPU
     #include "qindivid_gpu.h"
     #include "cuda_runtime.h"
     #include "cuda_error_handler.h"
-#ifdef CURAND
-    #include <time.h>
-#endif
 #endif
 
 //------------------------------------------------------------
@@ -17,24 +13,30 @@
 namespace QGen {
 //------------------------------------------------------------
 
-QObserveState::QObserveState()
+QObserveState::QObserveState( unsigned seed )
     : m_state(0)
     , m_stateSize(0)
+    , m_rand(0)
 #ifdef GPU
     , m_gpuBuf(0)
-#ifdef CURAND
-    , m_gpuRand( time(0) )
-    , m_randBuf(0)
-#endif
 #endif
 {
+#if defined( GPU ) && defined( CURAND )
+    m_rand = new RandomCURand();
+#elseif defined( STDRAND )
+    m_rand = new RandomDefault();
+#else 
+    m_rand = new RandomMTRand();
+#endif
 
+    m_rand->setSeed( seed );
 }
 
 //------------------------------------------------------------
 
 QObserveState::~QObserveState()
 {
+    delete m_rand;
     clear();
 }
 
@@ -48,14 +50,6 @@ void QObserveState::clear()
 #ifdef GPU
     if ( m_gpuBuf )
         SAFE_CALL( cudaFree( m_gpuBuf ) );
-    m_gpuBuf = 0;
-
-#ifdef CURAND
-    if ( m_randBuf )
-        delete[] m_randBuf;
-    m_randBuf = 0;
-#endif
-
 #endif
 }
 
@@ -70,20 +64,11 @@ void QObserveState::observe( const QBaseIndivid& ind )
     {
         case INDIVID_TYPE_CPU:
         {
-        #if defined( GPU ) && defined( CURAND )
-            m_gpuRand.generate();
-            m_gpuRand.copyInCPUData( m_randBuf );
-        #endif
             for ( long long i = 0; i < localStateSize; ++i )
             {
                 const QCPUIndivid& castedIndivid = ( const QCPUIndivid& )ind;
-            #ifdef STDRAND
-                const BASETYPE randVal = BASETYPE( rand() ) / RAND_MAX;
-            #elif defined( GPU ) && defined( CURAND )
-                const BASETYPE& randVal = m_randBuf[i];
-            #else
-                const BASETYPE randVal = BASETYPE( SharedMTRand::getClosedInstance()() );
-            #endif
+                const BASETYPE randVal = m_rand->next();
+
                 const QBit& qbit = castedIndivid.localAt(i);
                 const BASETYPE real = qbit.a.real();
                 const BASETYPE imag = qbit.a.imag();
@@ -122,8 +107,7 @@ void QObserveState::resize( long long size )
 #ifdef GPU
         SAFE_CALL( cudaMalloc( &m_gpuBuf, size_t(size) ) );
 #ifdef CURAND
-        m_gpuRand.resize( size );
-        m_randBuf = new BASETYPE[ size_t(size) ];
+        ( (RandomCURand *)m_rand )->setSize( size );
 #endif
 #endif
         m_stateSize = size;
