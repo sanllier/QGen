@@ -22,10 +22,6 @@
 namespace QGen {
 //------------------------------------------------------------
 
-int QGenProcess::m_instancesCount = 0;
-
-//------------------------------------------------------------
-
 struct QGenProcess::SQGenProcessContext
 {
     MPI_Comm generalComm;
@@ -95,12 +91,15 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
     int isMPIInitialized = 0;
     CHECK( MPI_Initialized( &isMPIInitialized ) );
     if ( !isMPIInitialized )
-        CHECK( MPI_Init( 0, 0 ) );
+        throw std::string( "MPI was not initialized." ).append( __FUNCTION__ );
 
     int initialCommRank = 0;
     int initialCommSize = 0;
     CHECK( MPI_Comm_rank( comm, &initialCommRank ) );
     CHECK( MPI_Comm_size( comm, &initialCommSize ) );
+
+    if ( m_params.topoCols <= 0 || m_params.topoRows <= 0 )
+        throw std::string( "Invalid requested topology dimensions." ).append( __FUNCTION__ );
 
     const int requestedCommSize = m_params.topoCols * m_params.topoRows;
 
@@ -108,10 +107,6 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
         throw std::string( "Invalid communicator: comm size <= 0. " ).append( __FUNCTION__ );
     if ( initialCommSize < requestedCommSize )
         throw std::string( "Initial communicator size is smaller than requsted. " ).append( __FUNCTION__ );
-
-    if ( initialCommRank == ROOT_ID )
-        ++m_instancesCount;        
-    CHECK( MPI_Bcast( &m_instancesCount, 1, MPI_INT, ROOT_ID, comm ) );
 
     m_ctx = new SQGenProcessContext();
 
@@ -173,12 +168,12 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
             }
             else
             {
-                #ifdef GPU
-                    if ( m_params.gpu )
-                        QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
-                    else
-                #endif
-                        QCPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
+            #ifdef GPU
+                if ( m_params.gpu )
+                    QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
+                else
+            #endif
+                    QCPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
             }
         }
 
@@ -236,10 +231,6 @@ QGenProcess::~QGenProcess()
     }
     
     delete m_ctx;
-
-    --m_instancesCount;
-    if ( m_instancesCount <= 0 )
-        CHECK( MPI_Finalize() );        
 }
 
 //-----------------------------------------------------------

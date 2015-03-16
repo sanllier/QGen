@@ -34,8 +34,6 @@ private:
     bool active() const;
 
 private:
-    static int m_instancesCount;
-
     SParams m_params;
 
     struct SQGenProcessContext;
