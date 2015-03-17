@@ -10,16 +10,17 @@ namespace QGen {
 //-----------------------------------------------------------
 
 SParams::SParams( MPI_Comm comm/* = MPI_COMM_NULL*/, const char* file/* = 0*/, IFitness* fC/* = 0*/, IRepair* rC/* = 0*/, IScreen* sC/* = 0*/ )
-        : cycThreshold(0)
+        : problemSize(0)
+        , cycThreshold(0)
         , individsNum(0)
         , indSize(0)
         , topoRows(1)
         , topoCols(1)
         , targetFitness( BASETYPE(0) )
         , accuracy( BASETYPE(0) )
-        , fClass(0) 
-        , repClass(0)
-        , screenClass(0)
+        , fClass(fC) 
+        , repClass(rC)
+        , screenClass(sC)
     #ifdef GPU
         , gpu(false)
     #endif
@@ -64,11 +65,15 @@ void SParams::initWithFile( MPI_Comm comm, const char* file, IFitness* fC, IRepa
 
     for ( pugi::xml_node node = qgenNode.child( "parameter" ); node; node = node.next_sibling() )
     {
-        const char* name = node.attribute( "name" ).as_string();
+        const char* name = node.attribute( "name" ).as_string(0);
         if ( !name )
             continue;
 
-        if ( 0 == strcmp( "cycle-threshold", name ) )
+        if ( 0 == strcmp( "problem-size", name ) )
+        {
+            problemSize = node.attribute( "value" ).as_uint(0);
+        }
+        else if ( 0 == strcmp( "cycle-threshold", name ) )
         {
             cycThreshold = (long long)node.attribute( "value" ).as_uint(0);
         }
@@ -108,9 +113,34 @@ void SParams::initWithFile( MPI_Comm comm, const char* file, IFitness* fC, IRepa
     #endif
     }
 
+    pugi::xml_node custom_node = qgenNode.child( "custom" );
+    for ( pugi::xml_node node = custom_node.child( "parameter" ); node; node = node.next_sibling() )
+    {
+        const char* name = node.attribute( "name" ).as_string(0);
+        const char* value = node.attribute( "value" ).as_string("");
+        if ( !name )
+            continue;
+
+        m_custom[ name ] = value ? value : "";        
+    }
+
     fClass      = fC;
     repClass    = rC;
     screenClass = sC;
+}
+
+//------------------------------------------------------------
+
+const char* SParams::getCustomParameter( const char* name ) const
+{
+    if ( !name || !name[0] )
+        return 0;
+    
+    std::map< std::string, std::string >::const_iterator found = m_custom.find( name );
+    if ( found != m_custom.end() )
+        return found->second.c_str();
+
+    return 0;
 }
 
 //------------------------------------------------------------
