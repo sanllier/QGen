@@ -1,4 +1,4 @@
-#ifndef RANDOM_MTRAND_H
+#if defined( RANDOM_MTRAND_H ) && defined( MTRAND )
 #define RANDOM_MTRAND_H
 
 #include "random.h"

@@ -4,12 +4,12 @@
 #include <iostream>
 #include "mpi.h"
 
-#if defined( GPU ) && defined( CURAND )
+#if defined( CURAND )
     #include "random_curand.h"
-#elseif defined( STDRAND )
-    #include "random_def.h"
+#elseif defined( MTRAND )
+    #include "random_mtrand.h"   
 #else 
-    #include "random_mtrand.h"
+    #include "random_def.h"
 #endif
 
 //------------------------------------------------------------
@@ -34,6 +34,15 @@ public:
     inline long long size() const { return m_stateSize; }
     bool at( long long pos ) const;
     void set( long long pos, bool val );
+
+    template<class T>
+    const T* reinterpret() const 
+    { 
+        if ( m_stateSize % sizeof(T) )
+            throw std::string( "Invalid size observ state size. " ).append( __FUNCTION__ );
+
+        return (T*)m_state;
+    }
 
 #ifdef GPU
     const bool* gpuBuffer() const { return m_gpuBuf; }

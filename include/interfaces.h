@@ -9,10 +9,10 @@
 namespace QGen {
 //------------------------------------------------------------
    
-class IProcessScreen
+class IScreen
 {
 public:
-    virtual ~IProcessScreen() {}
+    virtual ~IScreen() {}
     virtual void operator()( long long cycle, 
                              const int coords[2], 
                              const QBaseIndivid& totalBest, 

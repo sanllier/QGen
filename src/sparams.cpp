@@ -9,7 +9,7 @@
 namespace QGen {
 //-----------------------------------------------------------
 
-SParams::SParams( MPI_Comm comm/* = MPI_COMM_NULL*/, const char* file/* = 0*/, IFitness* fC/* = 0*/, IRepair* rC/* = 0*/, IProcessScreen* sC/* = 0*/ )
+SParams::SParams( MPI_Comm comm/* = MPI_COMM_NULL*/, const char* file/* = 0*/, IFitness* fC/* = 0*/, IRepair* rC/* = 0*/, IScreen* sC/* = 0*/ )
         : cycThreshold(0)
         , individsNum(0)
         , indSize(0)
@@ -33,13 +33,18 @@ SParams::SParams( MPI_Comm comm/* = MPI_COMM_NULL*/, const char* file/* = 0*/, I
 
 //-----------------------------------------------------------
 
-void SParams::initWithFile( MPI_Comm comm, const char* file, IFitness* fC, IRepair* rC/* = 0*/, IProcessScreen* sC/* = 0*/ )
+void SParams::initWithFile( MPI_Comm comm, const char* file, IFitness* fC, IRepair* rC/* = 0*/, IScreen* sC/* = 0*/ )
 {
+    int isMPIInitialized = 0;
+    CHECK( MPI_Initialized( &isMPIInitialized ) );
+    if ( !isMPIInitialized )
+        throw std::string( "MPI was not initialized." ).append( __FUNCTION__ );
+
     if ( !file || !file[0] )
         throw std::string( "Some problems with params file. " ).append( __FUNCTION__ );
 
     MPI_File fp = MPI_FILE_NULL;
-    CHECK( MPI_File_open( comm, file, MPI_INFO_NULL, MPI_MODE_RDONLY, &fp ) );
+    CHECK( MPI_File_open( comm, file, MPI_MODE_RDONLY, MPI_INFO_NULL, &fp ) );
     
     MPI_Offset fileSize = 0;
     CHECK( MPI_File_get_size( fp, &fileSize ) );

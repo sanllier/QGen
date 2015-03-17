@@ -1,4 +1,4 @@
-#if !defined( RANDOM_CURAND_H ) && defined( GPU )
+#if !defined( RANDOM_CURAND_H ) && defined( CURAND )
 #define RANDOM_CURAND_H
 
 #include "random.h"

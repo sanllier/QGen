@@ -21,12 +21,12 @@ QObserveState::QObserveState( unsigned seed )
     , m_gpuBuf(0)
 #endif
 {
-#if defined( GPU ) && defined( CURAND )
+#if defined( CURAND )
     m_rand = new RandomCURand();
-#elseif defined( STDRAND )
-    m_rand = new RandomDefault();
-#else 
+#elseif defined( MTRAND )
     m_rand = new RandomMTRand();
+#else 
+    m_rand = new RandomDefault();
 #endif
 
     m_rand->setSeed( seed );

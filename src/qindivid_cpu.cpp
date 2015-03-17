@@ -12,10 +12,10 @@
 
 #if defined( GPU ) && defined( CURAND )
     #include "random_curand.h"
-#elseif defined( STDRAND )
-    #include "random_def.h"
-#else 
+#elseif defined( MTRAND )
     #include "random_mtrand.h"
+#else 
+    #include "random_def.h"   
 #endif
 
 //------------------------------------------------------------
@@ -57,10 +57,10 @@ void QCPUIndivid::setInitial()
 #if defined( GPU ) && defined( CURAND )
     random = new RandomCURand();
     ( (RandomCURand*)random )->setSize( m_localLogicSize );
-#elseif defined( STDRAND )
-    random = new RandomDefault();
-#else 
+#elseif defined( MTRAND )
     random = new RandomMTRand();
+#else 
+    random = new RandomDefault();
 #endif
 
     random->setSeed( (unsigned)time(0) ^ ( m_context.coords[0] + m_context.coords[1] ) );  

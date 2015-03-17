@@ -1,3 +1,6 @@
+#ifdef CURAND
+//------------------------------------------------------------
+
 #include "random_curand.h"
 #include "curand.h"
 #include "cuda_error_handler.h"
@@ -75,5 +78,9 @@ void RandomCURand::generate() const
     SAFE_CURAND_CALL( curandGenerateUniform( *( curandGenerator_t * )m_gen, m_randomBufGPU, size_t( m_size ) ));
     SAFE_CALL( cudaMemcpy( m_randomBufCPU, m_randomBufGPU, size_t( m_size * sizeof( BASETYPE ) ), cudaMemcpyDeviceToHost ) );
 }
+
+//------------------------------------------------------------
+
+#endif
 
 //------------------------------------------------------------
