@@ -45,14 +45,14 @@ void SParams::initWithFile( MPI_Comm comm, const char* file, IFitness* fC, IRepa
         throw std::string( "Some problems with params file. " ).append( __FUNCTION__ );
 
     MPI_File fp = MPI_FILE_NULL;
-    CHECK( MPI_File_open( comm, file, MPI_MODE_RDONLY, MPI_INFO_NULL, &fp ) );
+    CHECK( MPI_File_open( comm, const_cast<char*>(file), MPI_MODE_RDONLY, MPI_INFO_NULL, &fp ) );
     
     MPI_Offset fileSize = 0;
     CHECK( MPI_File_get_size( fp, &fileSize ) );
     
     std::vector<char> buf( (unsigned)fileSize );
     MPI_Status status;    
-    MPI_File_read_at_all( fp, 0, &buf[0], int( fileSize ), MPI_CHAR, &status );
+    CHECK( MPI_File_read_at_all( fp, 0, &buf[0], int( fileSize ), MPI_CHAR, &status ) );
 
     CHECK( MPI_File_close( &fp ) );
 
