@@ -36,7 +36,7 @@ public:
     void set( long long pos, bool val );
 
     template<class T>
-    const T* reinterpret() const 
+    T* reinterpret() const 
     { 
         if ( m_stateSize % sizeof(T) )
             throw std::string( "Invalid size observ state size. " ).append( __FUNCTION__ );
