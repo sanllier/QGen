@@ -6,7 +6,7 @@
 
 #if defined( CURAND )
     #include "random_curand.h"
-#elseif defined( MTRAND )
+#elif defined( MTRAND )
     #include "random_mtrand.h"   
 #else 
     #include "random_def.h"

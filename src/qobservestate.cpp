@@ -119,8 +119,11 @@ void QObserveState::resize( long long size )
 bool QObserveState::at( long long pos ) const
 { 
     if ( pos < 0 || pos >= m_stateSize )
-        throw std::string( "QObservState out of bounds. " ).append( __FUNCTION__ ); 
-
+        throw std::string( "QObservState out of bounds. " ).append( std::to_string( pos ) )
+                                                           .append("/")
+                                                           .append( std::to_string( m_stateSize ) )
+                                                           .append(" ")
+                                                           .append( __FUNCTION__ ); 
     return m_state[ pos ]; 
 }
 
