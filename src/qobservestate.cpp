@@ -2,6 +2,7 @@
 #include "mpicheck.h"
 #include "qindivid_cpu.h"
 #include <string.h>
+#include <sstream>
 #ifdef GPU
     #include "qindivid_gpu.h"
     #include "cuda_runtime.h"
@@ -119,11 +120,11 @@ void QObserveState::resize( long long size )
 bool QObserveState::at( long long pos ) const
 { 
     if ( pos < 0 || pos >= m_stateSize )
-        throw std::string( "QObservState out of bounds. " ).append( std::to_string( pos ) )
-                                                           .append("/")
-                                                           .append( std::to_string( m_stateSize ) )
-                                                           .append(" ")
-                                                           .append( __FUNCTION__ ); 
+    {
+        std::stringstream sStr;
+        sStr << "QObservState out of bounds. " << pos << "/" << m_stateSize << " " << __FUNCTION__;
+        throw sStr.str();
+    }
     return m_state[ pos ]; 
 }
 
