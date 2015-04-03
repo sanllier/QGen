@@ -32,7 +32,7 @@ QBaseIndivid::QBaseIndivid( long long size, int coords[2], MPI_Comm comm )
     memcpy( m_context.coords, coords, 2 * sizeof( coords[0] ) );
     m_context.indComm = comm;
 
-    m_observeState = new QObserveState( (unsigned)time(0) ^ ( m_context.coords[0] + m_context.coords[1] ) );
+    m_observeState = new QObserveState( (unsigned)time(0) ^ (unsigned)( m_context.coords[0] + m_context.coords[1] ) );
 
     if ( MPI_QBIT == MPI_DATATYPE_NULL )
     {
@@ -87,10 +87,11 @@ BASETYPE QBaseIndivid::calculateFitness( IFitness* fClass )
     if ( !fClass )
         throw std::string( "QXIndivid is trying to calculate fitness with (NULL) func" ).append( __FUNCTION__ );  
 
-    bool needRecalc = false;
-    CHECK( MPI_Allreduce( &m_needRecalcFitness, &needRecalc, 1, MPI_CHAR, MPI_SUM, m_context.indComm ) );
+    const int localNeedRecalcFitness = m_needRecalcFitness ? 1 : 0;
+    int globalNeedRecalc = 0;
+    CHECK( MPI_Allreduce( &localNeedRecalcFitness, &globalNeedRecalc, 1, MPI_INT, MPI_SUM, m_context.indComm ) );
 
-    if ( needRecalc )
+    if ( globalNeedRecalc > 0 )
     {
         m_fitness = (*fClass)( m_context.indComm, *m_observeState, m_firstQbit, m_context.coords[0] );
         m_needRecalcFitness = false;
