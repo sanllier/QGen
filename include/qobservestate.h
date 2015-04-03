@@ -35,6 +35,8 @@ public:
     bool at( long long pos ) const;
     void set( long long pos, bool val );
 
+    void resize( long long size );
+
     template<class T>
     T* reinterpret() const 
     { 
@@ -52,9 +54,6 @@ public:
 
     QObserveState& operator=( const QObserveState& rState );
     
-private:
-    void resize( long long size );
-
 private:
     bool* m_state;
     long long m_stateSize;

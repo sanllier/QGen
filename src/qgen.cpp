@@ -99,7 +99,7 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
     CHECK( MPI_Comm_size( comm, &initialCommSize ) );
 
     if ( m_params.topoCols <= 0 || m_params.topoRows <= 0 )
-        throw std::string( "Invalid requested topology dimensions." ).append( __FUNCTION__ );
+        throw std::string( "Invalid topology settings. " ).append( __FUNCTION__ );
 
     const int requestedCommSize = m_params.topoCols * m_params.topoRows;
 
@@ -110,15 +110,14 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
 
     m_ctx = new SQGenProcessContext();
 
-    const int activesCount = std::min( requestedCommSize, initialCommSize );
-    int* ranks = new int[ activesCount ];
-    for ( int i = 0; i < activesCount; ++i )
+    int* ranks = new int[ requestedCommSize ];
+    for ( int i = 0; i < requestedCommSize; ++i )
         ranks[i] = i;
 
     MPI_Group initialGroup;
     MPI_Group workingGroup;
     CHECK( MPI_Comm_group( comm, &initialGroup ) );
-    CHECK( MPI_Group_incl( initialGroup, activesCount, ranks, &workingGroup ) );
+    CHECK( MPI_Group_incl( initialGroup, requestedCommSize, ranks, &workingGroup ) );
     CHECK( MPI_Comm_create( comm, workingGroup, &(m_ctx->generalComm) ) ); 
 
     delete[] ranks;
@@ -130,9 +129,6 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
         CHECK( MPI_Comm_rank( m_ctx->generalComm, &(m_ctx->generalRank) ) );
         CHECK( MPI_Comm_size( m_ctx->generalComm, &(m_ctx->generalSize) ) );
 
-        if ( m_params.topoCols <= 0 || m_params.topoRows <= 0 )
-            throw std::string( "Invalid topology settings. " ).append( __FUNCTION__ );
-
         int dims[2] = { m_params.topoRows, m_params.topoCols };
         int periods[2] = { 0, 0 };
         MPI_Comm cartComm = MPI_COMM_NULL;
@@ -140,70 +136,48 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
         if ( cartComm == MPI_COMM_NULL )
             throw std::string( "Some problems with cart communicator. " ).append( __FUNCTION__ );
 
+        CHECK( MPI_Cart_coords( cartComm, m_ctx->generalRank, 2, m_ctx->coords ) );
+
         if ( m_params.topoCols > 1 )
         {
             int remainRowCommDims[2] = { 0, 1 };
             CHECK( MPI_Cart_sub( cartComm, remainRowCommDims, &(m_ctx->rowComm) ) );
             CHECK( MPI_Comm_rank( m_ctx->rowComm, &(m_ctx->rowRank) ) );
             CHECK( MPI_Comm_size( m_ctx->rowComm, &(m_ctx->rowSize) ) );
+            if ( m_ctx->rowComm == MPI_COMM_NULL )
+                throw std::string( "Some problems with row communicator. " ).append( __FUNCTION__ );
         }
 
-        CHECK( MPI_Cart_coords( cartComm, m_ctx->generalRank, 2, m_ctx->coords ) );
+        int remainIndDims[2] = { 1, 0 };
+        MPI_Comm individComm = MPI_COMM_NULL;
+        CHECK( MPI_Cart_sub( cartComm, remainIndDims, &individComm ) ); 
 
         const int localIndsNum = m_params.individsNum / m_params.topoCols +
             ( m_ctx->coords[1] < m_params.individsNum % m_params.topoCols ? 1 : 0 );
-        const int maxIters = m_params.individsNum / m_params.topoCols +
-            ( m_params.individsNum % m_params.topoCols ? 1 : 0 );
 
         m_individs.resize( localIndsNum );
-        for ( int i = 0; i < maxIters; ++i )
+        for ( int i = 0; i < localIndsNum; ++i )
         {
-            if ( i < localIndsNum )
-            {
-                m_individs[i] =
-                #ifdef GPU
-                    m_params.gpu ? (QBaseIndivid*)new QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords ):
-                #endif
-                    (QBaseIndivid*)new QCPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
-            }
-            else
-            {
+            m_individs[i] =
             #ifdef GPU
-                if ( m_params.gpu )
-                    QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
-                else
+                m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords ):
             #endif
-                    QCPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords );
-            }
+                new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm );
         }
 
         m_totalBest = new SBestSolution;
         m_iterBest  = new SBestSolution;
-
-        if ( m_params.topoCols > 1 )
-        {
-            int remainRowCommDims[2] = { 0, 1 };
-            CHECK( MPI_Cart_sub( cartComm, remainRowCommDims, &m_iterBest->rowComm) );
-            m_iterBest->ind =
-            #ifdef GPU
-                m_params.gpu ? (QBaseIndivid*)new QGPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords ):
-            #endif
-                (QBaseIndivid*)new QCPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords );
-        }
-        else
-        {
-            m_iterBest->ind =
-            #ifdef GPU
-                m_params.gpu ? (QBaseIndivid*)new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
-            #endif
-                (QBaseIndivid*)new QCPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
-        }
+        m_iterBest->ind =
+        #ifdef GPU
+            m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords ):
+        #endif
+            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm );
 
         m_totalBest->ind =
         #ifdef GPU
-            m_params.gpu ? (QBaseIndivid*)new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
+            m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
         #endif
-            (QBaseIndivid*)new QCPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords );
+            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm );
         
         CHECK( MPI_Comm_free( &cartComm ) );
     }

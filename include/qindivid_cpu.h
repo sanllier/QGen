@@ -11,7 +11,7 @@ namespace QGen {
 class QCPUIndivid: public QBaseIndivid
 {
 public:
-    QCPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] );
+    QCPUIndivid( long long size, int coords[2], MPI_Comm comm );
     ~QCPUIndivid() OVERRIDE;
 
         // QBaseIndivid

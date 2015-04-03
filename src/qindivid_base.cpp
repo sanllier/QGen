@@ -15,21 +15,22 @@ BASETYPE QBaseIndivid::m_thetaField[2][2][2];
 
 //------------------------------------------------------------
 
-QBaseIndivid::QBaseIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] )
+QBaseIndivid::QBaseIndivid( long long size, int coords[2], MPI_Comm comm )
     : m_data(0)
     , m_fitness( BASETYPE(0) )
     , m_needRecalcFitness( true )
     , m_observeState(0)
+    , m_globalLogicSize(0)
+    , m_localLogicSize(0)
+    , m_firstQbit(0)
 {
     if ( size < 0 )
         throw std::string( "Invalid individ size. " ).append( __FUNCTION__ );
-    if ( generalComm == MPI_COMM_NULL )
-        throw std::string( "Invalid general communicator. " ).append( __FUNCTION__ );
+    if ( comm == MPI_COMM_NULL )
+        throw std::string( "Invalid individ communicator. " ).append( __FUNCTION__ );
 
     memcpy( m_context.coords, coords, 2 * sizeof( coords[0] ) );
-    
-    int remainIndDims[2] = { 1, 0 };
-    CHECK( MPI_Cart_sub( generalComm, remainIndDims, &m_context.indComm ) ); 
+    m_context.indComm = comm;
 
     m_observeState = new QObserveState( (unsigned)time(0) ^ ( m_context.coords[0] + m_context.coords[1] ) );
 
@@ -74,6 +75,7 @@ bool QBaseIndivid::resize( long long newSize )
     m_globalLogicSize = newSize;
     m_localLogicSize = newSize / commSize + ( procGridHeight < newSize % commSize ? 1 : 0 );
     m_firstQbit = ( newSize / commSize ) * procGridHeight + std::min( newSize % commSize, ( long long )procGridHeight ); 
+    m_observeState->resize( m_localLogicSize );
     m_needRecalcFitness = true;
     return true;
 }

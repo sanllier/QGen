@@ -107,9 +107,9 @@ void QObserveState::resize( long long size )
         m_state = new bool[ size_t(size) ];
 #ifdef GPU
         SAFE_CALL( cudaMalloc( &m_gpuBuf, size_t(size) ) );
+#endif
 #ifdef CURAND
         ( (RandomCURand *)m_rand )->setSize( size );
-#endif
 #endif
         m_stateSize = size;
     }

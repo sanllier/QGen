@@ -10,7 +10,7 @@
     #include "cuda_error_handler.h"
 #endif
 
-#if defined( GPU ) && defined( CURAND )
+#if defined( CURAND )
     #include "random_curand.h"
 #elseif defined( MTRAND )
     #include "random_mtrand.h"
@@ -23,8 +23,8 @@
 namespace QGen {
 //------------------------------------------------------------
 
-QCPUIndivid::QCPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] )
-    : QBaseIndivid( size, generalComm,  rowComm, coords )
+QCPUIndivid::QCPUIndivid( long long size, int coords[2], MPI_Comm comm )
+    : QBaseIndivid( size, coords, comm )
 {
     resize( size );
     setInitial();
@@ -54,7 +54,7 @@ bool QCPUIndivid::resize( long long newSize )
 void QCPUIndivid::setInitial()
 {
     IRandom* random = 0;
-#if defined( GPU ) && defined( CURAND )
+#if defined( CURAND )
     random = new RandomCURand();
     ( (RandomCURand*)random )->setSize( m_localLogicSize );
 #elseif defined( MTRAND )
