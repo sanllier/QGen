@@ -50,13 +50,11 @@ struct QGenProcess::SQGenProcessContext
 struct QGenProcess::SBestSolution
 {
     int procRank;
-    int localIdx;
     MPI_Comm rowComm;
     QBaseIndivid* ind;
 
     SBestSolution()
         : procRank(-1)
-        , localIdx(-1)
         , rowComm( MPI_COMM_NULL )
         , ind(0)
     {}
@@ -70,7 +68,6 @@ struct QGenProcess::SBestSolution
     SBestSolution& operator=( const SBestSolution& rSol )
     {
         procRank = rSol.procRank;
-        localIdx = rSol.localIdx;
         *ind     = *rSol.ind;
 
         return *this;
@@ -162,7 +159,7 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
             #ifdef GPU
                 m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords ):
             #endif
-                new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm );
+                new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm );
         }
 
         m_totalBest = new SBestSolution;
@@ -171,13 +168,13 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
         #ifdef GPU
             m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords ):
         #endif
-            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm );
+            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm );
 
         m_totalBest->ind =
         #ifdef GPU
             m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
         #endif
-            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm );
+            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm );
         
         CHECK( MPI_Comm_free( &cartComm ) );
     }
@@ -307,25 +304,17 @@ BASETYPE QGenProcess::findIterationBestInd()
     
     SNetIndividRef localBestIndRef = { maxFit, m_ctx->rowRank };
     SNetIndividRef globalBestIndRef;
-    int remoteLocalBestIndIdx = localBestIndIdx;
 
     if ( m_ctx->rowComm != MPI_COMM_NULL )
-    {
         CHECK( MPI_Allreduce( &localBestIndRef, &globalBestIndRef, 1, MPI_FLOAT_INT, MPI_MAXLOC, m_ctx->rowComm ) );
-        CHECK( MPI_Bcast( &remoteLocalBestIndIdx, 1, MPI_INT, globalBestIndRef.procRank, m_ctx->rowComm ) );
-    }
     else
-    {
-        globalBestIndRef = localBestIndRef;
-    }       
+        globalBestIndRef = localBestIndRef;  
 
     if ( globalBestIndRef.procRank == m_ctx->rowRank )
         *( m_iterBest->ind ) = *m_individs[ localBestIndIdx ];
 
     m_iterBest->ind->bcast( globalBestIndRef.procRank );
-
     m_iterBest->procRank = globalBestIndRef.procRank;
-    m_iterBest->localIdx = remoteLocalBestIndIdx;
 
     return globalBestIndRef.fitness;
 }

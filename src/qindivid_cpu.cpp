@@ -23,8 +23,8 @@
 namespace QGen {
 //------------------------------------------------------------
 
-QCPUIndivid::QCPUIndivid( long long size, int coords[2], MPI_Comm comm )
-    : QBaseIndivid( size, coords, comm )
+QCPUIndivid::QCPUIndivid( long long size, int coords[2], MPI_Comm individComm, MPI_Comm rowComm )
+    : QBaseIndivid( size, coords, individComm, rowComm )
 {
     resize( size );
     setInitial();

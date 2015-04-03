@@ -27,7 +27,7 @@ class IRepair;
 class QBaseIndivid
 {
 public:
-    QBaseIndivid( long long size, int coords[2], MPI_Comm comm );
+    QBaseIndivid( long long size, int coords[2], MPI_Comm individComm, MPI_Comm rowComm );
     virtual ~QBaseIndivid();
 
     virtual EIndividType getType() const = 0;
@@ -73,11 +73,13 @@ protected:
     {
         MPI_Comm indComm;
         MPI_Comm rowComm;
+        int rowSize;
         int coords[2];
 
         SBaseIndividContext()
             : indComm( MPI_COMM_NULL )
             , rowComm( MPI_COMM_NULL )
+            , rowSize(0)
         {}
     };
     SBaseIndividContext m_context;
