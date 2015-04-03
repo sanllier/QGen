@@ -91,7 +91,7 @@ BASETYPE QBaseIndivid::calculateFitness( IFitness* fClass )
     if ( !fClass )
         throw std::string( "QXIndivid is trying to calculate fitness with (NULL) func" ).append( __FUNCTION__ );  
 
-    const int localNeedRecalcFitness = m_needRecalcFitness ? 1 : 0;
+    int localNeedRecalcFitness = m_needRecalcFitness ? 1 : 0;
     int globalNeedRecalc = 0;
     CHECK( MPI_Allreduce( &localNeedRecalcFitness, &globalNeedRecalc, 1, MPI_INT, MPI_SUM, m_context.indComm ) );
 
