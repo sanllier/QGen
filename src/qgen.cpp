@@ -6,6 +6,13 @@
 #ifdef GPU
     #include "qindivid_gpu.h"
 #endif
+#ifdef CURAND
+    #include "random_curand.h"
+#elif defined ( MTRAND )
+    #include "random_mtrand.h"
+#else
+    #include "random_def.h"
+#endif
 
 #include <string>
 #include <string.h>
@@ -109,8 +116,15 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
     if ( initialCommSize < requestedCommSize )
         throw std::string( "Initial communicator size is smaller than requsted. " ).append( __FUNCTION__ );
 
-    m_randomizer = Randomizer::Create( unsigned( time(0) ) ^ unsigned( initialCommRank ) );
-
+    const unsigned seed = unsigned( time(0) ) ^ unsigned( initialCommRank );
+#ifdef CURAND
+    m_randomizer = Randomizer::Create( new RandomCURand(), seed );
+#elif defined ( MTRAND )
+    m_randomizer = Randomizer::Create( new RandomMTRand(), seed );
+#else
+    m_randomizer = Randomizer::Create( new RandomDefault(), seed );
+#endif
+   
     m_ctx = new SQGenProcessContext();
 
     CHECK( MPI_Comm_split( comm, initialCommRank < requestedCommSize, initialCommRank, &m_ctx->generalComm ) );

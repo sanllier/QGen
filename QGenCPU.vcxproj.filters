@@ -47,9 +47,6 @@
     <ClCompile Include="src\random_curand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\random_node.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\randomizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -113,9 +110,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\random_mtrand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\random_node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\randomizer.h">
