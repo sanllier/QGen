@@ -35,6 +35,8 @@ struct QGenProcess::SQGenProcessContext
 
     int coords[2];
 
+    bool active;
+
     SQGenProcessContext()
         : generalComm( MPI_COMM_NULL )
         , rowComm( MPI_COMM_NULL )
@@ -42,6 +44,7 @@ struct QGenProcess::SQGenProcessContext
         , rowRank( -1 )
         , generalSize(0)
         , rowSize(0)
+        , active( false )
     {}
 };
 
@@ -107,21 +110,10 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
 
     m_ctx = new SQGenProcessContext();
 
-    int* ranks = new int[ requestedCommSize ];
-    for ( int i = 0; i < requestedCommSize; ++i )
-        ranks[i] = i;
+    CHECK( MPI_Comm_split( comm, initialCommRank < requestedCommSize, initialCommRank, &m_ctx->generalComm ) );
+    m_ctx->active = initialCommRank < requestedCommSize;
 
-    MPI_Group initialGroup;
-    MPI_Group workingGroup;
-    CHECK( MPI_Comm_group( comm, &initialGroup ) );
-    CHECK( MPI_Group_incl( initialGroup, requestedCommSize, ranks, &workingGroup ) );
-    CHECK( MPI_Comm_create( comm, workingGroup, &(m_ctx->generalComm) ) ); 
-
-    delete[] ranks;
-    CHECK( MPI_Group_free( &initialGroup ) );
-    CHECK( MPI_Group_free( &workingGroup ) );
-
-    if ( m_ctx->generalComm != MPI_COMM_NULL )
+    if ( initialCommRank < requestedCommSize )
     {
         CHECK( MPI_Comm_rank( m_ctx->generalComm, &(m_ctx->generalRank) ) );
         CHECK( MPI_Comm_size( m_ctx->generalComm, &(m_ctx->generalSize) ) );
@@ -229,7 +221,7 @@ bool QGenProcess::isMasterInd() const
 
 bool QGenProcess::active() const 
 { 
-    return m_ctx->generalComm != MPI_COMM_NULL;
+    return m_ctx->active;
 }
 
 //-----------------------------------------------------------
