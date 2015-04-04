@@ -9,6 +9,7 @@
 
 #include <string>
 #include <string.h>
+#include <time.h>
 
 //------------------------------------------------------------
 
@@ -108,6 +109,8 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
     if ( initialCommSize < requestedCommSize )
         throw std::string( "Initial communicator size is smaller than requsted. " ).append( __FUNCTION__ );
 
+    m_randomizer = Randomizer::Create( unsigned( time(0) ) ^ unsigned( initialCommRank ) );
+
     m_ctx = new SQGenProcessContext();
 
     CHECK( MPI_Comm_split( comm, initialCommRank < requestedCommSize, initialCommRank, &m_ctx->generalComm ) );
@@ -193,6 +196,7 @@ QGenProcess::~QGenProcess()
         //CHECK( MPI_Comm_free( &m_ctx.rowComm ) );  
     }
     
+    Randomizer::Dispose();
     delete m_ctx;
 }
 

@@ -103,7 +103,9 @@
     <ClCompile Include="src\qindivid_gpu.cpp" />
     <ClCompile Include="src\qobservestate.cpp" />
     <ClCompile Include="src\qrotoperator.cpp" />
+    <ClCompile Include="src\randomizer.cpp" />
     <ClCompile Include="src\random_curand.cpp" />
+    <ClCompile Include="src\random_node.cpp" />
     <ClCompile Include="src\sparams.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -123,9 +125,11 @@
     <ClInclude Include="include\qobservestate.h" />
     <ClInclude Include="include\qrotoperator.h" />
     <ClInclude Include="include\random.h" />
+    <ClInclude Include="include\randomizer.h" />
     <ClInclude Include="include\random_curand.h" />
     <ClInclude Include="include\random_def.h" />
     <ClInclude Include="include\random_mtrand.h" />
+    <ClInclude Include="include\random_node.h" />
     <ClInclude Include="include\sparams.h" />
   </ItemGroup>
   <ItemGroup>

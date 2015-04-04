@@ -10,13 +10,7 @@
     #include "cuda_error_handler.h"
 #endif
 
-#if defined( CURAND )
-    #include "random_curand.h"
-#elseif defined( MTRAND )
-    #include "random_mtrand.h"
-#else 
-    #include "random_def.h"   
-#endif
+#include "randomizer.h"
 
 //------------------------------------------------------------
 
@@ -53,26 +47,13 @@ bool QCPUIndivid::resize( long long newSize )
 
 void QCPUIndivid::setInitial()
 {
-    IRandom* random = 0;
-#if defined( CURAND )
-    random = new RandomCURand();
-    ( (RandomCURand*)random )->setSize( m_localLogicSize );
-#elseif defined( MTRAND )
-    random = new RandomMTRand();
-#else 
-    random = new RandomDefault();
-#endif
-
-    random->setSeed( (unsigned)time(0) ^ ( m_context.coords[0] + m_context.coords[1] ) );  
-
     for ( long long i = 0; i < m_localLogicSize; ++i )
     {
-        m_data[i].a = random->next();
+        m_data[i].a = Randomizer::Get()->next();
         m_data[i].b = std::sqrt( QComplex( BASETYPE(1) ) - m_data[i].a );
     }
 
     m_needRecalcFitness = true;
-    delete random;
 }
 
 //------------------------------------------------------------

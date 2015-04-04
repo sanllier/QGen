@@ -36,7 +36,7 @@ QBaseIndivid::QBaseIndivid( long long size, int coords[2], MPI_Comm individComm,
     if ( m_context.rowComm != MPI_COMM_NULL )
         CHECK( MPI_Comm_size( m_context.rowComm, &m_context.rowSize ) );
 
-    m_observeState = new QObserveState( (unsigned)time(0) ^ (unsigned)( m_context.coords[0] + m_context.coords[1] ) );
+    m_observeState = new QObserveState();
 
     if ( MPI_QBIT == MPI_DATATYPE_NULL )
     {

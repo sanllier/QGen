@@ -14,7 +14,7 @@
 namespace QGen {
 //------------------------------------------------------------
 
-QObserveState::QObserveState( unsigned seed )
+QObserveState::QObserveState()
     : m_state(0)
     , m_stateSize(0)
     , m_rand(0)
@@ -22,22 +22,13 @@ QObserveState::QObserveState( unsigned seed )
     , m_gpuBuf(0)
 #endif
 {
-#if defined( CURAND )
-    m_rand = new RandomCURand();
-#elseif defined( MTRAND )
-    m_rand = new RandomMTRand();
-#else 
-    m_rand = new RandomDefault();
-#endif
-
-    m_rand->setSeed( seed );
+    m_rand = Randomizer::Get();
 }
 
 //------------------------------------------------------------
 
 QObserveState::~QObserveState()
 {
-    delete m_rand;
     clear();
 }
 

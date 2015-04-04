@@ -7,6 +7,7 @@
 #include "mpicheck.h"
 #include "qindivid_base.h"
 #include "interfaces.h"
+#include "randomizer.h"
 #include "sparams.h"
 #include "defs.h"
 
@@ -44,6 +45,8 @@ private:
     struct SBestSolution;
     SBestSolution* m_totalBest;
     SBestSolution* m_iterBest;
+
+    Randomizer* m_randomizer;
 };
 
 //-----------------------------------------------------------

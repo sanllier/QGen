@@ -25,6 +25,7 @@ struct SParams
     int indSize;
     int topoRows;
     int topoCols;
+    bool randomizationNode;
     BASETYPE targetFitness;
     BASETYPE accuracy;
     IFitness*  fClass;

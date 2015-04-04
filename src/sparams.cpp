@@ -16,6 +16,7 @@ SParams::SParams( MPI_Comm comm/* = MPI_COMM_NULL*/, const char* file/* = 0*/, I
         , indSize(0)
         , topoRows(1)
         , topoCols(1)
+        , randomizationNode(0)
         , targetFitness( BASETYPE(0) )
         , accuracy( BASETYPE(0) )
         , fClass(fC) 
@@ -79,19 +80,23 @@ void SParams::initWithFile( MPI_Comm comm, const char* file, IFitness* fC, IRepa
         }
         else if ( 0 == strcmp( "individs-num", name ) )
         {
-            individsNum = (int)node.attribute( "value" ).as_int(0);
+            individsNum = node.attribute( "value" ).as_int(0);
         }
         else if ( 0 == strcmp( "individ-size", name ) )
         {
-            indSize = (int)node.attribute( "value" ).as_int(0);
+            indSize = node.attribute( "value" ).as_int(0);
         }
         else if ( 0 == strcmp( "topology-rows", name ) )
         {
-            topoRows = (int)node.attribute( "value" ).as_int(0);
+            topoRows = node.attribute( "value" ).as_int(0);
         }
         else if ( 0 == strcmp( "topology-cols", name ) )
         {
-            topoCols = (int)node.attribute( "value" ).as_int(0);
+            topoCols = node.attribute( "value" ).as_int(0);
+        }
+        else if ( 0 == strcmp( "randomization-node", name ) )
+        {
+            randomizationNode = node.attribute( "value" ).as_bool( false );
         }
         else if ( 0 == strcmp( "target-fitness", name ) )
         {

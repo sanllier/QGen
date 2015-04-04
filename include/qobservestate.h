@@ -3,14 +3,7 @@
 
 #include <iostream>
 #include "mpi.h"
-
-#if defined( CURAND )
-    #include "random_curand.h"
-#elif defined( MTRAND )
-    #include "random_mtrand.h"   
-#else 
-    #include "random_def.h"
-#endif
+#include "randomizer.h"
 
 //------------------------------------------------------------
 
@@ -24,7 +17,7 @@ class QBaseIndivid;
 class QObserveState
 {
 public:
-    QObserveState( unsigned seed );
+    QObserveState();
     ~QObserveState(); 
 
     void observe( const QBaseIndivid& ind );  // generate observe-vector by input individ
