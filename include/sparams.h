@@ -25,6 +25,7 @@ struct SParams
     int indSize;
     int topoRows;
     int topoCols;
+    BASETYPE thetaFrac;
     BASETYPE targetFitness;
     BASETYPE accuracy;
     IFitness*  fClass;

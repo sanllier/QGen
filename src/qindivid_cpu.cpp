@@ -17,8 +17,8 @@
 namespace QGen {
 //------------------------------------------------------------
 
-QCPUIndivid::QCPUIndivid( long long size, int coords[2], MPI_Comm individComm, MPI_Comm rowComm )
-    : QBaseIndivid( size, coords, individComm, rowComm )
+QCPUIndivid::QCPUIndivid( long long size, int coords[2], MPI_Comm individComm, MPI_Comm rowComm, BASETYPE thetaFrac/* = BASETYPE(1)*/ )
+    : QBaseIndivid( size, coords, individComm, rowComm, thetaFrac )
 {
     resize( size );
     setInitial();

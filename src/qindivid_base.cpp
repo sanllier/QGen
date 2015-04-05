@@ -15,7 +15,7 @@ BASETYPE QBaseIndivid::m_thetaField[2][2][2];
 
 //------------------------------------------------------------
 
-QBaseIndivid::QBaseIndivid( long long size, int coords[2], MPI_Comm individComm, MPI_Comm rowComm )
+QBaseIndivid::QBaseIndivid( long long size, int coords[2], MPI_Comm individComm, MPI_Comm rowComm, BASETYPE thetaFrac/* = BASETYPE(1)*/ )
     : m_data(0)
     , m_fitness( BASETYPE(0) )
     , m_needRecalcFitness( true )
@@ -43,14 +43,14 @@ QBaseIndivid::QBaseIndivid( long long size, int coords[2], MPI_Comm individComm,
         CHECK( MPI_Type_vector( 1, 4, sizeof( BASETYPE ), MPI_BASETYPE, &MPI_QBIT ) );
         CHECK( MPI_Type_commit( &MPI_QBIT ) );
 
-        m_thetaField[0][0][0] = BASETYPE( 0.01 ) * PI;
-        m_thetaField[0][0][1] = BASETYPE( 0.01 ) * PI;
-        m_thetaField[0][1][0] = BASETYPE( 0.8 )  * PI;
-        m_thetaField[0][1][1] = BASETYPE( 0.01 ) * PI;
-        m_thetaField[1][0][0] = BASETYPE( 0.8 )  * PI;
-        m_thetaField[1][0][1] = BASETYPE( 0.01 ) * PI;
-        m_thetaField[1][1][0] = BASETYPE( 0.01 ) * PI;
-        m_thetaField[1][1][1] = BASETYPE( 0.01 ) * PI;
+        m_thetaField[0][0][0] = BASETYPE( 0.01 ) * thetaFrac * PI;
+        m_thetaField[0][0][1] = BASETYPE( 0.01 ) * thetaFrac * PI;
+        m_thetaField[0][1][0] = BASETYPE( 0.8 )  * thetaFrac * PI;
+        m_thetaField[0][1][1] = BASETYPE( 0.01 ) * thetaFrac * PI;
+        m_thetaField[1][0][0] = BASETYPE( 0.8 )  * thetaFrac * PI;
+        m_thetaField[1][0][1] = BASETYPE( 0.01 ) * thetaFrac * PI;
+        m_thetaField[1][1][0] = BASETYPE( 0.01 ) * thetaFrac * PI;
+        m_thetaField[1][1][1] = BASETYPE( 0.01 ) * thetaFrac * PI;
     }
 }
 

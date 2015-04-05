@@ -27,7 +27,7 @@ class IRepair;
 class QBaseIndivid
 {
 public:
-    QBaseIndivid( long long size, int coords[2], MPI_Comm individComm, MPI_Comm rowComm );
+    QBaseIndivid( long long size, int coords[2], MPI_Comm individComm, MPI_Comm rowComm, BASETYPE thetaFrac = BASETYPE(1) );
     virtual ~QBaseIndivid();
 
     virtual EIndividType getType() const = 0;

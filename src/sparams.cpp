@@ -18,6 +18,7 @@ SParams::SParams( MPI_Comm comm/* = MPI_COMM_NULL*/, const char* file/* = 0*/, I
         , topoCols(1)
         , targetFitness( BASETYPE(0) )
         , accuracy( BASETYPE(0) )
+        , thetaFrac( BASETYPE(1) )
         , fClass(fC) 
         , repClass(rC)
         , screenClass(sC)
@@ -100,6 +101,10 @@ void SParams::initWithFile( MPI_Comm comm, const char* file, IFitness* fC, IRepa
         else if ( 0 == strcmp( "target-accuracy", name ) )
         {
             accuracy = (BASETYPE)node.attribute( "value" ).as_double(0.0);
+        }
+        else if ( 0 == strcmp( "theta-frac", name ) )
+        {
+            thetaFrac = (BASETYPE)node.attribute( "value" ).as_double(1.0);
         }
         else if ( 0 == strcmp( "out-file", name ) )
         {

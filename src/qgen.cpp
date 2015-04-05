@@ -166,24 +166,24 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
         {
             m_individs[i] =
             #ifdef GPU
-                m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords ):
+                m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_ctx->rowComm, m_ctx->coords, m_params.thetaFrac ):
             #endif
-                new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm );
+                new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm, m_params.thetaFrac );
         }
 
         m_totalBest = new SBestSolution;
         m_iterBest  = new SBestSolution;
         m_iterBest->ind =
         #ifdef GPU
-            m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords ):
+            m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords, m_params.thetaFrac ):
         #endif
-            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm );
+            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm, m_params.thetaFrac );
 
         m_totalBest->ind =
         #ifdef GPU
-            m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords ):
+            m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords, m_params.thetaFrac ):
         #endif
-            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm );
+            new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm, m_params.thetaFrac );
         
         CHECK( MPI_Comm_free( &cartComm ) );
     }

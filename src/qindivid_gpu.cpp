@@ -34,8 +34,8 @@ BASETYPE* QGPUIndivid::m_gpuThetaFiled = 0;
 
 //------------------------------------------------------------
 
-QGPUIndivid::QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] )
-    : QBaseIndivid( size, generalComm,  rowComm, coords )
+QGPUIndivid::QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2], BASETYPE thetaFrac/* = BASETYPE(1)*/ )
+    : QBaseIndivid( size, generalComm,  rowComm, coords, thetaFrac )
     , m_cpuBuf(0)
     , m_thetaBuf(0)
     , m_isBetterGPUBuf(0)

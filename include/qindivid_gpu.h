@@ -11,7 +11,7 @@ namespace QGen {
 class QGPUIndivid: public QBaseIndivid
 {
 public:
-    QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2] );
+    QGPUIndivid( long long size, MPI_Comm generalComm, MPI_Comm rowComm, int coords[2], BASETYPE thetaFrac = BASETYPE(1) );
     ~QGPUIndivid() OVERRIDE;
 
         // QBaseIndivid
