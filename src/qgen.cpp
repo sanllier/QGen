@@ -58,35 +58,6 @@ struct QGenProcess::SQGenProcessContext
 
 //-----------------------------------------------------------
 
-struct QGenProcess::SBestSolution
-{
-    int procRank;
-    MPI_Comm rowComm;
-    QBaseIndivid* ind;
-
-    SBestSolution()
-        : procRank(-1)
-        , rowComm( MPI_COMM_NULL )
-        , ind(0)
-    {}
-    ~SBestSolution()
-    {
-        delete ind;
-        // CRAP
-        //CHECK( MPI_Comm_free( &rowComm ) );
-    }
-
-    SBestSolution& operator=( const SBestSolution& rSol )
-    {
-        procRank = rSol.procRank;
-        *ind     = *rSol.ind;
-
-        return *this;
-    }
-};
-
-//-----------------------------------------------------------
-
 QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORLD*/ )
     : m_params( params ) 
     , m_ctx(0)
@@ -171,15 +142,13 @@ QGenProcess::QGenProcess( const SParams& params, MPI_Comm comm/* = MPI_COMM_WORL
                 new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm, m_params.thetaFrac );
         }
 
-        m_totalBest = new SBestSolution;
-        m_iterBest  = new SBestSolution;
-        m_iterBest->ind =
+        m_iterBest =
         #ifdef GPU
             m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, m_iterBest->rowComm, m_ctx->coords, m_params.thetaFrac ):
         #endif
             new QCPUIndivid( m_params.indSize, m_ctx->coords, individComm, m_ctx->rowComm, m_params.thetaFrac );
 
-        m_totalBest->ind =
+        m_totalBest =
         #ifdef GPU
             m_params.gpu ? new QGPUIndivid( m_params.indSize, cartComm, MPI_COMM_NULL, m_ctx->coords, m_params.thetaFrac ):
         #endif
@@ -216,9 +185,12 @@ QGenProcess::~QGenProcess()
 
 //-----------------------------------------------------------
 
-const QBaseIndivid* QGenProcess::getBestIndivid() const
+QBaseIndivid* QGenProcess::getBestIndivid( int coords[2] )
 {
-    return m_totalBest->ind;
+    coords[0] = m_ctx->coords[0];
+    coords[1] = m_ctx->coords[1];
+
+    return m_totalBest;
 }
 
 //-----------------------------------------------------------
@@ -257,25 +229,25 @@ double QGenProcess::process()
     {
         BASETYPE bestFitness = findIterationBestInd();
 
-        if ( bestFitness > m_totalBest->ind->getFitness() || cycle == 1 )
+        if ( bestFitness > m_totalBest->getFitness() || cycle == 1 )
             *m_totalBest = *m_iterBest;
 
         if ( m_params.screenClass )
-            ( *m_params.screenClass )( cycle, m_ctx->coords, *( m_totalBest->ind ), *( m_iterBest->ind ) );
+            ( *m_params.screenClass )( cycle, m_ctx->coords, *( m_totalBest ), *( m_iterBest ) );
 
         if ( m_params.targetFitness > 0.0f )
         {
             if ( m_params.accuracy > 0.0f )
             {
-                if ( fabs( m_totalBest->ind->getFitness() - m_params.targetFitness ) <= m_params.accuracy )
+                if ( fabs( m_totalBest->getFitness() - m_params.targetFitness ) <= m_params.accuracy )
                     return MPI_Wtime() - startTime;
             }
-            else if ( m_totalBest->ind->getFitness() >= m_params.targetFitness )
+            else if ( m_totalBest->getFitness() >= m_params.targetFitness )
                 return MPI_Wtime() - startTime;
         }
 
         for ( int i = 0; i < (int)m_individs.size(); ++i )
-            m_individs[i]->evolve( *( m_iterBest->ind ) );
+            m_individs[i]->evolve( *( m_iterBest ) );
     }
 
     return MPI_Wtime() - startTime;
@@ -321,10 +293,9 @@ BASETYPE QGenProcess::findIterationBestInd()
         globalBestIndRef = localBestIndRef;  
 
     if ( globalBestIndRef.procRank == m_ctx->rowRank )
-        *( m_iterBest->ind ) = *m_individs[ localBestIndIdx ];
+        *m_iterBest = *m_individs[ localBestIndIdx ];
 
-    m_iterBest->ind->bcast( globalBestIndRef.procRank );
-    m_iterBest->procRank = globalBestIndRef.procRank;
+    m_iterBest->bcast( globalBestIndRef.procRank );
 
     return globalBestIndRef.fitness;
 }

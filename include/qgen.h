@@ -24,7 +24,7 @@ public:
 
     double process();
 
-    const QBaseIndivid* getBestIndivid() const;
+    QBaseIndivid* getBestIndivid( int coords[2] );
 
     bool isMaster() const;
     bool isMasterInd() const;
@@ -41,10 +41,9 @@ private:
     SQGenProcessContext* m_ctx;
 
     std::vector< QBaseIndivid* > m_individs;
-    
-    struct SBestSolution;
-    SBestSolution* m_totalBest;
-    SBestSolution* m_iterBest;
+
+    QBaseIndivid* m_totalBest;
+    QBaseIndivid* m_iterBest;
 
     Randomizer* m_randomizer;
 };

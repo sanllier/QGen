@@ -17,8 +17,10 @@ endif
 
 ifneq ($(CURAND), )
 	DFLAG += -DCURAND
-else ifneq ($(MTRAND), )
-	DFLAG += -DMTRAND
+else 
+	ifneq ($(MTRAND), )
+		DFLAG += -DMTRAND
+	endif
 endif
 
 #-----------------------------------------------------------------------------
@@ -58,7 +60,8 @@ BINFILE := $(BINFILE).a
 
 FILES = mpicheck pugixml qgen \
         qindivid_base qindivid_cpu \
-        qobservestate qrotoperator sparams
+        qobservestate qrotoperator sparams \
+        randomizer
 
 ifneq ($(GPU), )
 	FILES += qindivid_gpu
