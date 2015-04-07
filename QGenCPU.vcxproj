@@ -100,7 +100,6 @@
     <ClCompile Include="src\qgen.cpp" />
     <ClCompile Include="src\qindivid_cpu.cpp" />
     <ClCompile Include="src\qindivid_base.cpp" />
-    <ClCompile Include="src\qindivid_gpu.cpp" />
     <ClCompile Include="src\qobservestate.cpp" />
     <ClCompile Include="src\qrotoperator.cpp" />
     <ClCompile Include="src\randomizer.cpp" />
@@ -108,9 +107,7 @@
     <ClCompile Include="src\sparams.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\cuda_error_handler.h" />
     <ClInclude Include="include\defs.h" />
-    <ClInclude Include="include\defs_gpu.h" />
     <ClInclude Include="include\interfaces.h" />
     <ClInclude Include="include\mpicheck.h" />
     <ClInclude Include="include\mtrand.h" />
@@ -120,7 +117,6 @@
     <ClInclude Include="include\qgen.h" />
     <ClInclude Include="include\qindivid_cpu.h" />
     <ClInclude Include="include\qindivid_base.h" />
-    <ClInclude Include="include\qindivid_gpu.h" />
     <ClInclude Include="include\qobservestate.h" />
     <ClInclude Include="include\qrotoperator.h" />
     <ClInclude Include="include\random.h" />
@@ -129,12 +125,6 @@
     <ClInclude Include="include\random_def.h" />
     <ClInclude Include="include\random_mtrand.h" />
     <ClInclude Include="include\sparams.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="src\kernels.cu">
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-    </CudaCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

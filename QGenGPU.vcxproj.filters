@@ -32,9 +32,6 @@
     <ClCompile Include="src\qobservestate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\qindivid_cpu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\qindivid_gpu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -45,6 +42,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\random_curand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\randomizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -68,9 +68,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\qobservestate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\qindivid_cpu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\qindivid_gpu.h">
@@ -107,6 +104,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\random_mtrand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\randomizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -35,9 +35,6 @@
     <ClCompile Include="src\qindivid_cpu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\qindivid_gpu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\pugixml.cpp">
       <Filter>pugixml</Filter>
     </ClCompile>
@@ -76,15 +73,6 @@
     <ClInclude Include="include\qindivid_cpu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\qindivid_gpu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cuda_error_handler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\defs_gpu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\pugiconfig.hpp">
       <Filter>pugixml</Filter>
     </ClInclude>
@@ -115,10 +103,5 @@
     <ClInclude Include="include\randomizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="src\kernels.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>
